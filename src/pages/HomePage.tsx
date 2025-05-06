@@ -1,13 +1,22 @@
-
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ChevronRight, Target, Award, Users } from 'lucide-react';
 import { campaigns } from '@/services/mockData';
 import CampaignCard from '@/components/campaigns/CampaignCard';
+import { Campaign } from '@/types';
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const featuredCampaigns = campaigns.slice(0, 3);
+  // Adapter les campaigns mock data pour qu'ils soient conformes au type attendu par CampaignCard
+  const featuredCampaigns = campaigns.slice(0, 3).map(campaign => ({
+    ...campaign,
+    image_url: campaign.imageUrl || '',
+    end_date: campaign.endDate || '',
+    organizer: {
+      name: campaign.organizer,
+      avatar_url: undefined
+    }
+  })) as Campaign[];
 
   return (
     <div>

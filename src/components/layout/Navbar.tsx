@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 const Navbar = () => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, profile, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -33,6 +33,11 @@ const Navbar = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  // Obtenir l'initiale du nom d'utilisateur pour le fallback de l'avatar
+  const getInitial = (name: string | null | undefined) => {
+    return name && name.length > 0 ? name.charAt(0) : '?';
   };
 
   return (
@@ -86,16 +91,16 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                     <Avatar className="h-9 w-9">
-                      <AvatarImage src={user.avatarUrl} alt={user.name} />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'User'} />
+                      <AvatarFallback>{getInitial(profile?.name)}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-0.5">
-                      <p className="text-sm font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <p className="text-sm font-medium">{profile?.name}</p>
+                      <p className="text-xs text-muted-foreground">{profile?.email}</p>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
@@ -178,12 +183,12 @@ const Navbar = () => {
               <>
                 <div className="flex items-center gap-3 mb-3">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name || 'User'} />
+                    <AvatarFallback>{getInitial(profile?.name)}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                    <p className="text-sm font-medium">{profile?.name}</p>
+                    <p className="text-xs text-muted-foreground">{profile?.email}</p>
                   </div>
                 </div>
                 <Button 

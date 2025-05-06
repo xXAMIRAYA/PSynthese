@@ -11,6 +11,15 @@ export interface User {
   badges?: Badge[];
 }
 
+export interface Profile {
+  id: string;
+  name: string | null;
+  email: string | null;
+  role: string | null;
+  avatar_url: string | null;
+  created_at: string | null;
+}
+
 export interface Campaign {
   id: string;
   title: string;
@@ -26,6 +35,11 @@ export interface Campaign {
   createdAt: string;
   status: 'active' | 'completed' | 'urgent';
   updates?: CampaignUpdate[];
+  image_url?: string;
+  end_date?: string;
+  donors_count?: number;
+  created_at?: string;
+  organizer_id?: string;
 }
 
 export interface CampaignUpdate {

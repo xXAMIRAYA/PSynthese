@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type DonationFormData = {
@@ -91,7 +90,7 @@ export const getDonationStats = async (userId: string) => {
       throw error;
     }
 
-    const totalDonated = data.reduce((sum, donation) => sum + parseFloat(donation.amount), 0);
+    const totalDonated = data.reduce((sum, donation) => sum + parseFloat(String(donation.amount)), 0);
     
     return {
       count: data.length,
