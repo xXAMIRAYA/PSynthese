@@ -1,8 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Campaign, User } from '@/types';
-import { campaigns as mockCampaigns, users as mockUsers } from '@/services/mockData';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -11,12 +9,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import DonateForm from './DonateForm';
 import { useToast } from '@/components/ui/use-toast';
+import { fetchCampaignById } from '@/services/campaignService';
+import { fetchDonationsByCampaign } from '@/services/donationService';
 import { ArrowLeft, Calendar, MapPin, User as UserIcon, Award } from "lucide-react";
 
 const CampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [organizer, setOrganizer] = useState<User | null>(null);
+  const [campaign, setCampaign] = useState<any | null>(null);
+  const [donations, setDonations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDonateForm, setShowDonateForm] = useState(false);
   const { user } = useAuth();
@@ -24,18 +24,30 @@ const CampaignDetail = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // In a real app, this would be an API call
-    setIsLoading(true);
-    setTimeout(() => {
-      const foundCampaign = mockCampaigns.find(c => c.id === id);
-      if (foundCampaign) {
-        setCampaign(foundCampaign);
-        // For demo purposes, we'll just set a random organizer
-        setOrganizer(mockUsers[0]);
+    if (!id) return;
+    
+    const loadCampaign = async () => {
+      setIsLoading(true);
+      try {
+        const campaignData = await fetchCampaignById(id);
+        setCampaign(campaignData);
+        
+        const donationsData = await fetchDonationsByCampaign(id);
+        setDonations(donationsData);
+      } catch (error) {
+        console.error('Error loading campaign:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les détails de la campagne",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }, 500); // Simulating API delay
-  }, [id]);
+    };
+    
+    loadCampaign();
+  }, [id, toast]);
 
   if (isLoading) {
     return (
@@ -88,9 +100,18 @@ const CampaignDetail = () => {
     }
   };
 
-  const handleDonateSuccess = () => {
+  const handleDonateSuccess = async () => {
     setShowDonateForm(false);
-    // In a real app, we would refetch the campaign to update the raised amount
+    // Refresh campaign data to update the raised amount
+    try {
+      const updatedCampaign = await fetchCampaignById(id!);
+      setCampaign(updatedCampaign);
+      
+      const updatedDonations = await fetchDonationsByCampaign(id!);
+      setDonations(updatedDonations);
+    } catch (error) {
+      console.error('Error refreshing campaign data:', error);
+    }
   };
   
   return (
@@ -107,7 +128,7 @@ const CampaignDetail = () => {
       <div className="space-y-4">
         <div className="relative rounded-lg overflow-hidden h-64 md:h-80">
           <img 
-            src={campaign.imageUrl} 
+            src={campaign.image_url || '/placeholder.svg'} 
             alt={campaign.title}
             className="w-full h-full object-cover"
           />
@@ -133,11 +154,11 @@ const CampaignDetail = () => {
             </div>
             <div className="flex items-center gap-2 mt-1 text-muted-foreground">
               <Calendar size={16} />
-              <span>Date limite: {formatDate(campaign.endDate)}</span>
+              <span>Date limite: {formatDate(campaign.end_date)}</span>
             </div>
             <div className="flex items-center gap-2 mt-1 text-muted-foreground">
               <UserIcon size={16} />
-              <span>Organisé par {campaign.organizer}</span>
+              <span>Organisé par {campaign.organizer?.name || 'Unknown'}</span>
             </div>
           </div>
 
@@ -151,7 +172,7 @@ const CampaignDetail = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="font-medium">{progressPercentage}% complété</span>
-                  <span className="text-muted-foreground">{campaign.donorsCount} donateurs</span>
+                  <span className="text-muted-foreground">{campaign.donors_count} donateurs</span>
                 </div>
                 <Progress value={progressPercentage} className="progress-bar-animation h-2" />
               </div>
@@ -194,14 +215,14 @@ const CampaignDetail = () => {
           <TabsContent value="updates" className="mt-6">
             {campaign.updates && campaign.updates.length > 0 ? (
               <div className="space-y-4">
-                {campaign.updates.map((update) => (
+                {campaign.updates.map((update: any) => (
                   <Card key={update.id}>
                     <CardContent className="p-4 space-y-2">
-                      <p className="text-sm text-muted-foreground">{formatDate(update.createdAt)}</p>
+                      <p className="text-sm text-muted-foreground">{formatDate(update.created_at)}</p>
                       <p>{update.content}</p>
-                      {update.imageUrl && (
+                      {update.image_url && (
                         <img 
-                          src={update.imageUrl} 
+                          src={update.image_url} 
                           alt="Update" 
                           className="rounded-md w-full h-48 object-cover mt-2" 
                         />
@@ -218,13 +239,40 @@ const CampaignDetail = () => {
           </TabsContent>
           
           <TabsContent value="donors" className="mt-6">
-            <div className="text-center py-12">
-              <Award className="h-12 w-12 mx-auto text-primary mb-4" />
-              <h3 className="text-xl font-semibold">Merci aux {campaign.donorsCount} généreux donateurs!</h3>
-              <p className="text-muted-foreground mt-2">
-                Votre soutien est essentiel pour atteindre nos objectifs.
-              </p>
-            </div>
+            {donations && donations.length > 0 ? (
+              <div className="space-y-4">
+                {donations.map((donation: any) => (
+                  <Card key={donation.id}>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          {donation.anonymous ? (
+                            <p className="font-semibold">Donateur anonyme</p>
+                          ) : (
+                            <p className="font-semibold">{donation.donor?.name || 'Unknown'}</p>
+                          )}
+                          <p className="text-sm text-muted-foreground">{formatDate(donation.created_at)}</p>
+                          {donation.message && (
+                            <p className="mt-2 italic">{donation.message}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold">{formatCurrency(donation.amount)}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Award className="h-12 w-12 mx-auto text-primary mb-4" />
+                <h3 className="text-xl font-semibold">Soyez le premier à donner !</h3>
+                <p className="text-muted-foreground mt-2">
+                  Votre soutien est essentiel pour atteindre nos objectifs.
+                </p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

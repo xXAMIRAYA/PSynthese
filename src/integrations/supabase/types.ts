@@ -9,7 +9,166 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      campaign_updates: {
+        Row: {
+          campaign_id: string
+          content: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+        }
+        Insert: {
+          campaign_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_updates_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string
+          donors_count: number | null
+          end_date: string
+          id: string
+          image_url: string | null
+          location: string
+          organizer_id: string
+          raised: number | null
+          status: string | null
+          target: number
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description: string
+          donors_count?: number | null
+          end_date: string
+          id?: string
+          image_url?: string | null
+          location: string
+          organizer_id: string
+          raised?: number | null
+          status?: string | null
+          target: number
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string
+          donors_count?: number | null
+          end_date?: string
+          id?: string
+          image_url?: string | null
+          location?: string
+          organizer_id?: string
+          raised?: number | null
+          status?: string | null
+          target?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      donations: {
+        Row: {
+          amount: number
+          anonymous: boolean | null
+          campaign_id: string
+          created_at: string | null
+          id: string
+          message: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          anonymous?: boolean | null
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          anonymous?: boolean | null
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donations_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "donations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string | null
+          role: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          id: string
+          name?: string | null
+          role?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          role?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

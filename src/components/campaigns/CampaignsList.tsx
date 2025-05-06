@@ -1,22 +1,39 @@
 
 import { useState, useEffect } from 'react';
-import { Campaign } from '@/types';
 import CampaignCard from './CampaignCard';
-import { campaigns as mockCampaigns } from '@/services/mockData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { fetchCampaigns } from '@/services/campaignService';
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CampaignsList = () => {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [filteredCampaigns, setFilteredCampaigns] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTab, setCurrentTab] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
-    // In a real application, this would be an API call
-    setCampaigns(mockCampaigns);
-    setFilteredCampaigns(mockCampaigns);
+    const loadCampaigns = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchCampaigns();
+        setCampaigns(data);
+        setFilteredCampaigns(data);
+      } catch (error) {
+        console.error('Error loading campaigns:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadCampaigns();
   }, []);
 
   useEffect(() => {
@@ -38,8 +55,7 @@ const CampaignsList = () => {
         campaign =>
           campaign.title.toLowerCase().includes(query) ||
           campaign.description.toLowerCase().includes(query) ||
-          campaign.location.toLowerCase().includes(query) ||
-          campaign.organizer.toLowerCase().includes(query)
+          campaign.location.toLowerCase().includes(query)
       );
     }
     
@@ -48,15 +64,23 @@ const CampaignsList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Rechercher une campagne..."
-          className="pl-8"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="relative flex-grow max-w-md">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Rechercher une campagne..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
+        {user && (
+          <Button onClick={() => navigate('/campaigns/create')} className="whitespace-nowrap">
+            <Plus className="mr-2 h-4 w-4" /> Créer une campagne
+          </Button>
+        )}
       </div>
       
       <Tabs defaultValue="all" onValueChange={setCurrentTab}>
@@ -70,7 +94,12 @@ const CampaignsList = () => {
         </TabsList>
       </Tabs>
       
-      {filteredCampaigns.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Chargement des campagnes...</p>
+        </div>
+      ) : filteredCampaigns.length === 0 ? (
         <div className="text-center py-12">
           <h3 className="text-lg font-medium">Aucune campagne trouvée</h3>
           <p className="text-muted-foreground">Essayez de modifier vos critères de recherche</p>

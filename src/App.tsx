@@ -18,6 +18,7 @@ import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
+import CreateCampaignPage from "./pages/CreateCampaignPage";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,17 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <DashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/campaigns/create" 
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CreateCampaignPage />
                   </Layout>
                 </ProtectedRoute>
               } 

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { makeDonation } from '@/services/donationService';
 
 interface DonateFormProps {
   campaignId: string;
@@ -24,8 +25,17 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
 
   const predefinedAmounts = [10, 25, 50, 100, 200];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Erreur",
+        description: "Vous devez être connecté pour faire un don",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (!amount || amount <= 0) {
       toast({
@@ -38,15 +48,28 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
     
     setIsSubmitting(true);
     
-    // In a real app, this would be an API call
-    setTimeout(() => {
+    try {
+      await makeDonation(campaignId, user.id, {
+        amount,
+        message: message.trim() || undefined,
+        anonymous: isAnonymous
+      });
+      
       toast({
         title: "Merci pour votre don!",
         description: `Vous avez donné ${amount}€ à cette campagne.`,
       });
-      setIsSubmitting(false);
       onSuccess();
-    }, 1500);
+    } catch (error) {
+      console.error('Error donating:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors du traitement de votre don",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

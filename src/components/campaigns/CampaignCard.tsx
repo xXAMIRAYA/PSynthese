@@ -1,79 +1,113 @@
 
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Campaign } from "@/types";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Calendar, MapPin, User } from "lucide-react";
 
 interface CampaignCardProps {
-  campaign: Campaign;
+  campaign: {
+    id: string;
+    title: string;
+    category: string;
+    location: string;
+    target: number;
+    raised: number;
+    image_url: string;
+    status: string;
+    end_date: string;
+    organizer: {
+      name: string;
+      avatar_url?: string;
+    };
+  };
 }
 
 const CampaignCard = ({ campaign }: CampaignCardProps) => {
+  const navigate = useNavigate();
   const progressPercentage = Math.min(Math.round((campaign.raised / campaign.target) * 100), 100);
   
-  // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
   };
   
-  // Get status badge color
-  const getBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'urgent':
-        return 'destructive';
-      case 'completed':
-        return 'secondary';
-      default:
-        return 'default';
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+  
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'emergency': return 'Urgence';
+      case 'research': return 'Recherche';
+      case 'equipment': return 'Équipement';
+      case 'awareness': return 'Sensibilisation';
+      case 'care': return 'Soins';
+      default: return category;
     }
   };
-
+  
   return (
-    <Link to={`/campaign/${campaign.id}`} className="block">
-      <Card className="campaign-card h-full overflow-hidden">
-        <div className="relative h-48 overflow-hidden">
-          <img 
-            src={campaign.imageUrl} 
-            alt={campaign.title} 
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-          />
-          <Badge 
-            variant={getBadgeVariant(campaign.status)} 
-            className="absolute top-3 right-3"
-          >
-            {campaign.status === 'urgent' ? 'Urgent' : 
-             campaign.status === 'completed' ? 'Complété' : 'Actif'}
-          </Badge>
-          <Badge className="absolute top-3 left-3">
-            {campaign.category === 'emergency' ? 'Urgence' : 
-             campaign.category === 'research' ? 'Recherche' : 
-             campaign.category === 'equipment' ? 'Équipement' :
-             campaign.category === 'awareness' ? 'Sensibilisation' : 'Soins'}
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <div className="relative">
+        <img 
+          src={campaign.image_url || '/placeholder.svg'} 
+          alt={campaign.title}
+          className="h-48 w-full object-cover"
+        />
+        <div className="absolute top-2 right-2 flex gap-2">
+          <Badge variant={campaign.status === 'urgent' ? 'destructive' : 'default'}>
+            {campaign.status === 'urgent' ? 'Urgent' : campaign.status === 'completed' ? 'Complété' : 'Actif'}
           </Badge>
         </div>
-        <CardHeader className="py-4">
-          <h3 className="font-bold text-lg line-clamp-2">{campaign.title}</h3>
-          <p className="text-muted-foreground text-sm">{campaign.location}</p>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm line-clamp-3 mb-4">
-            {campaign.description}
+      </div>
+      
+      <CardContent className="pt-4">
+        <div className="flex justify-between items-start">
+          <Badge variant="outline" className="mb-2">
+            {getCategoryLabel(campaign.category)}
+          </Badge>
+        </div>
+        
+        <h3 className="font-bold text-lg mb-2 line-clamp-2">{campaign.title}</h3>
+        
+        <div className="flex items-center text-sm text-muted-foreground mb-1">
+          <MapPin className="h-3.5 w-3.5 mr-1" />
+          <span>{campaign.location}</span>
+        </div>
+        
+        <div className="flex items-center text-sm text-muted-foreground mb-1">
+          <Calendar className="h-3.5 w-3.5 mr-1" />
+          <span>Fin: {formatDate(campaign.end_date)}</span>
+        </div>
+        
+        <div className="flex items-center text-sm text-muted-foreground mb-4">
+          <User className="h-3.5 w-3.5 mr-1" />
+          <span>{campaign.organizer?.name || 'Unknown'}</span>
+        </div>
+        
+        <div className="space-y-2 mt-4">
+          <div className="flex justify-between text-sm">
+            <span className="font-medium">{progressPercentage}%</span>
+            <span>{formatCurrency(campaign.raised)} / {formatCurrency(campaign.target)}</span>
           </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm font-medium">{progressPercentage}% complété</span>
-              <span className="text-sm text-muted-foreground">{formatCurrency(campaign.raised)} / {formatCurrency(campaign.target)}</span>
-            </div>
-            <Progress value={progressPercentage} className="progress-bar-animation" />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between text-xs text-muted-foreground">
-          <span>Par {campaign.organizer}</span>
-          <span>{campaign.donorsCount} donateurs</span>
-        </CardFooter>
-      </Card>
-    </Link>
+          <Progress value={progressPercentage} className="h-2" />
+        </div>
+      </CardContent>
+      
+      <CardFooter className="pt-0">
+        <Button 
+          onClick={() => navigate(`/campaign/${campaign.id}`)} 
+          className="w-full"
+        >
+          Voir la campagne
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 

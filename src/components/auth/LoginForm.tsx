@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -13,6 +13,9 @@ const LoginForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const from = location.state?.from || '/dashboard';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +24,7 @@ const LoginForm: React.FC = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate('/dashboard');
+        navigate(from);
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -73,11 +76,6 @@ const LoginForm: React.FC = () => {
             S'inscrire
           </a>
         </p>
-        <div className="text-xs text-muted-foreground mt-4">
-          <p className="mb-1">Comptes de démonstration:</p>
-          <p>Admin: admin@healthsolidarity.com / admin123</p>
-          <p>Utilisateur: user@healthsolidarity.com / user123</p>
-        </div>
       </CardFooter>
     </Card>
   );

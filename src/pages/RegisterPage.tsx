@@ -1,12 +1,13 @@
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from "lucide-react";
+import { useAuth } from '@/contexts/AuthContext';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -16,6 +17,7 @@ const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,16 +34,26 @@ const RegisterPage = () => {
       return;
     }
     
+    if (password.length < 6) {
+      toast({
+        title: "Erreur",
+        description: "Le mot de passe doit comporter au moins 6 caractères",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+    
     try {
-      // In a real app, this would be an API call to register
-      // For this demo, we'll just show a success message and redirect
-      setTimeout(() => {
+      const success = await register(email, password, name);
+      
+      if (success) {
         toast({
           title: "Compte créé avec succès",
           description: "Vous pouvez maintenant vous connecter avec vos identifiants",
         });
         navigate('/login');
-      }, 1500);
+      }
     } catch (error) {
       console.error('Registration error:', error);
       toast({
@@ -49,6 +61,7 @@ const RegisterPage = () => {
         description: "Une erreur est survenue lors de la création du compte",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
