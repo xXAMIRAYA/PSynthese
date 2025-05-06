@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ChevronRight, Target, Award, Users } from 'lucide-react';
@@ -7,6 +8,7 @@ import { Campaign } from '@/types';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  
   // Adapter les campaigns mock data pour qu'ils soient conformes au type attendu par CampaignCard
   const featuredCampaigns = mockCampaigns.slice(0, 3).map(campaign => ({
     id: campaign.id,
@@ -14,15 +16,18 @@ const HomePage = () => {
     description: campaign.description,
     category: campaign.category as 'emergency' | 'research' | 'equipment' | 'care' | 'awareness',
     location: campaign.location,
-    organizer: campaign.organizer.name,
+    organizer: {
+      name: typeof campaign.organizer === 'string' ? campaign.organizer : campaign.organizer.name,
+      avatar_url: typeof campaign.organizer === 'string' ? undefined : campaign.organizer.avatar_url
+    },
     target: campaign.target,
     raised: campaign.raised,
-    donorsCount: campaign.donors_count || 0,
-    imageUrl: campaign.image_url || '',
-    endDate: campaign.end_date || '',
-    createdAt: campaign.created_at || '',
+    donors_count: campaign.donorsCount || campaign.donors_count || 0,
+    image_url: campaign.imageUrl || campaign.image_url || '',
+    end_date: campaign.endDate || campaign.end_date || '',
+    created_at: campaign.createdAt || campaign.created_at || '',
     status: campaign.status as 'active' | 'completed' | 'urgent'
-  })) as Campaign[];
+  }));
 
   return (
     <div>
