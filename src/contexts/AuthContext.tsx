@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 interface Profile {
+  created_at: string;
   id: string;
   name: string;
   email: string;
