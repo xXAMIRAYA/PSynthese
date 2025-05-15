@@ -86,7 +86,7 @@ const CampaignsList = () => {
       <Tabs defaultValue="all" onValueChange={setCurrentTab}>
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
           <TabsTrigger value="all">Toutes</TabsTrigger>
-          <TabsTrigger value="urgent">Urgentes</TabsTrigger>
+          <TabsTrigger value="urgent">Sensibilitation</TabsTrigger>
           <TabsTrigger value="emergency">Urgence</TabsTrigger>
           <TabsTrigger value="research">Recherche</TabsTrigger>
           <TabsTrigger value="equipment">Équipement</TabsTrigger>
