@@ -17,8 +17,8 @@ const HomePage = () => {
     category: campaign.category as 'emergency' | 'research' | 'equipment' | 'care' | 'awareness',
     location: campaign.location,
     organizer: {
-      name: typeof campaign.organizer === 'string' ? campaign.organizer : campaign.organizer.name,
-      avatar_url: typeof campaign.organizer === 'string' ? undefined : campaign.organizer.avatar_url
+      name: typeof campaign.organizer === 'string' ? campaign.organizer : campaign.organizer,
+      avatar_url: typeof campaign.organizer === 'string' ? undefined : campaign.organizer
     },
     target: campaign.target,
     raised: campaign.raised,
