@@ -16,7 +16,7 @@ const AboutPage = () => {
             Notre mission
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight max-w-3xl mx-auto mb-6">
-            À propos de Health Solidarity Hub
+            À propos de MainSolidaire
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
             Nous transformons l'expérience du don dans le domaine de la santé en intégrant des mécanismes de gamification, d'interactivité, de transparence et d'engagement communautaire.
@@ -31,7 +31,7 @@ const AboutPage = () => {
             <div>
               <h2 className="text-3xl font-bold mb-6">Notre Histoire</h2>
               <p className="text-lg text-muted-foreground mb-4">
-                Health Solidarity Hub est né d'une vision simple mais puissante : rendre les dons en santé plus accessibles, motivants et traçables.
+                MainSolidaire est né d'une vision simple mais puissante : rendre les dons en santé plus accessibles, motivants et traçables.
               </p>
               <p className="text-lg text-muted-foreground mb-4">
                 Face aux défis croissants du financement des soins de santé et des initiatives médicales, nous avons créé une plateforme qui renforce la solidarité et l'impact social dans le secteur médical.
@@ -145,7 +145,7 @@ const AboutPage = () => {
                   className="h-full w-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-medium">Dr. Sophie Martin</h3>
+              <h3 className="text-xl font-medium">Amir AYA</h3>
               <p className="text-primary mb-2">Fondatrice & Directrice</p>
               <p className="text-muted-foreground text-sm">
                 Médecin et entrepreneuse sociale, passionnée par l'accès équitable aux soins de santé.
@@ -159,7 +159,7 @@ const AboutPage = () => {
                   className="h-full w-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-medium">Pierre Dumont</h3>
+              <h3 className="text-xl font-medium">Eloissif IKRAM</h3>
               <p className="text-primary mb-2">Directeur Technique</p>
               <p className="text-muted-foreground text-sm">
                 Expert en technologie avec 15 ans d'expérience dans le développement de plateformes sociales.
@@ -173,24 +173,10 @@ const AboutPage = () => {
                   className="h-full w-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-medium">Hélène Rousseau</h3>
+              <h3 className="text-xl font-medium">Batta AMAR</h3>
               <p className="text-primary mb-2">Directrice des Partenariats</p>
               <p className="text-muted-foreground text-sm">
                 Spécialiste des relations avec les organisations de santé et les institutions médicales.
-              </p>
-            </div>
-            <div className="bg-background p-6 rounded-lg border text-center">
-              <div className="h-32 w-32 rounded-full overflow-hidden mx-auto mb-4">
-                <img 
-                  src="https://source.unsplash.com/random/300x300/?person" 
-                  alt="Membre de l'équipe"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <h3 className="text-xl font-medium">Thomas Legrand</h3>
-              <p className="text-primary mb-2">Responsable Engagement</p>
-              <p className="text-muted-foreground text-sm">
-                Expert en gamification et en stratégies d'engagement communautaire.
               </p>
             </div>
           </div>
