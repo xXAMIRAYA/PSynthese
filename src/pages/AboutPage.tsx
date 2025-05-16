@@ -41,11 +41,14 @@ const AboutPage = () => {
               </p>
             </div>
             <div className="relative rounded-lg overflow-hidden h-80">
-              <img 
-                src="https://source.unsplash.com/random/800x600/?medical-team" 
-                alt="Notre équipe"
-                className="w-full h-full object-cover"
-              />
+  <img  
+  src="/4.png" 
+  alt="Notre équipe"
+  className="w-[800px] h-[630px] object-cover"
+/>
+
+
+
             </div>
           </div>
         </div>
@@ -159,7 +162,7 @@ const AboutPage = () => {
                   className="h-full w-full object-cover"
                 />
               </div>
-              <h3 className="text-xl font-medium">Eloissif IKRAM</h3>
+              <h3 className="text-xl font-medium">Elouassif IKRAM</h3>
               <p className="text-primary mb-2">Directeur Technique</p>
               <p className="text-muted-foreground text-sm">
                 Expert en technologie avec 15 ans d'expérience dans le développement de plateformes sociales.
