@@ -50,7 +50,7 @@ const HomePage = () => {
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" onClick={() => navigate('/about')}>
-              En savoir plus
+              En savoir plu s
             </Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full max-w-3xl">
