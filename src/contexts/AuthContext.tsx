@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +18,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<boolean>;
+  register: (email: string, password: string, name: string, role?: string) => Promise<boolean>;
   isAdmin: () => boolean;
   updateProfile: (profile: Partial<Profile>) => Promise<void>;
 }
@@ -124,25 +123,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const register = async (email: string, password: string, name: string): Promise<boolean> => {
+  const register = async (email: string, password: string, name: string, role: string = "donator"): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Étape 1: Inscription de l'utilisateur avec Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name: name,
+            role: role, // Stocker le rôle dans les métadonnées
           }
         }
       });
 
-      if (error) {
+      if (authError) {
         toast({
           title: "Erreur d'inscription",
-          description: error.message,
+          description: authError.message,
           variant: "destructive",
         });
         return false;
+      }
+
+      // Étape 2: Créer/Mettre à jour le profil dans la table profiles
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: authData.user.id,
+            name: name,
+            email: email,
+            role: role,
+            created_at: new Date().toISOString()
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          // On continue même si la création du profil échoue, l'utilisateur est déjà inscrit
+        }
       }
 
       toast({

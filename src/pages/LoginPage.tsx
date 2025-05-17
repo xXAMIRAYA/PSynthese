@@ -22,7 +22,7 @@ const LoginPage = () => {
         <div className="text-center">
           <Heart className="h-12 w-12 text-primary mx-auto" />
           <h2 className="mt-6 text-3xl font-bold tracking-tight text-foreground">
-            Connexion à Health Solidarity
+            Connexion à MainSolidaire
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Accédez à votre espace personnel pour gérer vos dons et suivre leur impact.

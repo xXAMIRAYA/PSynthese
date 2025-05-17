@@ -46,7 +46,7 @@ const Navbar = () => {
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center space-x-2">
             <Heart className="h-6 w-6 text-primary" />
-            <span className="hidden font-bold text-xl sm:inline-block">Health Solidarity</span>
+            <span className="hidden font-bold text-xl sm:inline-block">MainSolidaire</span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">

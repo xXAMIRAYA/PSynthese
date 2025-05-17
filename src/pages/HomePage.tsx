@@ -17,8 +17,8 @@ const HomePage = () => {
     category: campaign.category as 'emergency' | 'research' | 'equipment' | 'care' | 'awareness',
     location: campaign.location,
     organizer: {
-      name: typeof campaign.organizer === 'string' ? campaign.organizer : campaign.organizer.name,
-      avatar_url: typeof campaign.organizer === 'string' ? undefined : campaign.organizer.avatar_url
+      name: typeof campaign.organizer === 'string' ? campaign.organizer : campaign.organizer,
+      avatar_url: typeof campaign.organizer === 'string' ? undefined : campaign.organizer
     },
     target: campaign.target,
     raised: campaign.raised,
@@ -42,7 +42,7 @@ const HomePage = () => {
             Transformez votre générosité en <span className="text-primary">impact médical concret</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 animate-fade-in">
-            Health Solidarity Hub met en relation les donateurs et les structures médicales pour transformer l'expérience du don dans le domaine de la santé.
+           MainSolidaire  met en relation les donateurs et les structures médicales pour transformer l'expérience du don dans le domaine de la santé.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mb-12 animate-fade-in">
             <Button size="lg" onClick={() => navigate('/campaigns')}>
@@ -105,7 +105,7 @@ const HomePage = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-2">Comment ça marche</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Health Solidarity Hub rend le processus de don transparent, engageant et efficace.
+              MainSolidaire rend le processus de don transparent, engageant et efficace.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -152,14 +152,14 @@ const HomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-card border rounded-lg p-6">
               <p className="italic mb-4">
-                "Grâce à Health Solidarity Hub, j'ai pu suivre l'impact concret de mes dons pour l'hôpital de ma ville. La transparence et les mises à jour régulières m'ont vraiment rassuré."
+                "Grâce à MainSolidaire, j'ai pu suivre l'impact concret de mes dons pour l'hôpital de ma ville. La transparence et les mises à jour régulières m'ont vraiment rassuré."
               </p>
               <div className="flex items-center">
                 <div className="h-10 w-10 rounded-full bg-medical-100 flex items-center justify-center mr-3">
                   <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <div className="font-medium">Jean Dupont</div>
+                  <div className="font-medium">Dr Salah Edinne Alami</div>
                   <div className="text-sm text-muted-foreground">Donateur régulier</div>
                 </div>
               </div>
@@ -173,7 +173,7 @@ const HomePage = () => {
                   <Users className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <div className="font-medium">Dr. Marie Laurent</div>
+                  <div className="font-medium">Amir Elamrani</div>
                   <div className="text-sm text-muted-foreground">Chercheuse en oncologie</div>
                 </div>
               </div>
