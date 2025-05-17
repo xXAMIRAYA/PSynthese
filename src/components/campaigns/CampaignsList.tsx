@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, ChevronRight } from "lucide-react";
 import { fetchCampaigns } from '@/services/campaignService';
 import { Button } from "@/components/ui/button";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const CampaignsList = () => {
@@ -14,8 +14,17 @@ const CampaignsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTab, setCurrentTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+
   const navigate = useNavigate();
+  const location = useLocation(); // pour lire query params
   const { user } = useAuth();
+
+  // Synchroniser currentTab avec l'URL au chargement ou changement d'URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab') || 'all';
+    setCurrentTab(tab);
+  }, [location.search]);
 
   useEffect(() => {
     const loadCampaigns = async () => {
@@ -57,6 +66,14 @@ const CampaignsList = () => {
     setFilteredCampaigns(result);
   }, [currentTab, searchQuery, campaigns]);
 
+  // Quand on change d'onglet, on met à jour l'URL
+  const handleTabChange = (value: string) => {
+    setCurrentTab(value);
+    const params = new URLSearchParams(location.search);
+    params.set('tab', value);
+    navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+  };
+
   return (
     <div className="space-y-6">
       {/* Recherche + Bouton */}
@@ -76,11 +93,13 @@ const CampaignsList = () => {
           user.role === "donnateur" ? (
             <Button  
               variant="ghost" 
-              onClick={() => navigate('/campaigns')}
+              asChild
               className="mt-4 md:mt-0"
             >
-              Voir toutes les campagnes
-              <ChevronRight className="ml-2 h-4 w-4" />
+              <a href="/campaigns?tab=emergency" className="flex items-center">
+                Voir toutes les campagnes
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </a>
             </Button>
           ) : (
             <Button onClick={() => navigate('/campaigns/create')} className="whitespace-nowrap">
@@ -91,7 +110,7 @@ const CampaignsList = () => {
       </div>
 
       {/* Onglets */}
-      <Tabs defaultValue="all" onValueChange={setCurrentTab}>
+      <Tabs value={currentTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
           <TabsTrigger value="all">Toutes</TabsTrigger>
           {/* <TabsTrigger value="urgent">Urgentes</TabsTrigger> */}
