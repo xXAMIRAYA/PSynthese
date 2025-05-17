@@ -99,7 +99,7 @@ export type Database = {
       }
       donations: {
         Row: {
-          amount: number
+          amount: string
           anonymous: boolean | null
           campaign_id: string
           created_at: string | null
