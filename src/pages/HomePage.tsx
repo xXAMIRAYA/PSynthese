@@ -1,15 +1,47 @@
-
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 import { Heart, ChevronRight, Target, Award, Users } from 'lucide-react';
 import { campaigns as mockCampaigns } from '@/services/mockData';
 import CampaignCard from '@/components/campaigns/CampaignCard';
 import { Campaign } from '@/types';
+import { useState, useEffect } from 'react';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { fetchCampaigns } from '@/services/campaignService';
+import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const HomePage = () => {
   const navigate = useNavigate();
-  
-  // Adapter les campaigns mock data pour qu'ils soient conformes au type attendu par CampaignCard
+  const { user } = useAuth();
+
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
+  const [search, setSearch] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      try {
+        const data = await fetchCampaigns();
+        setCampaigns(data);
+        setFilteredCampaigns(data);
+      } catch (error) {
+        console.error("Erreur lors du chargement des campagnes :", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCampaigns();
+  }, []);
+
+  useEffect(() => {
+    const results = campaigns.filter(campaign =>
+      campaign.title.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredCampaigns(results);
+  }, [search, campaigns]);
+
   const featuredCampaigns = mockCampaigns.slice(0, 3).map(campaign => ({
     id: campaign.id,
     title: campaign.title,
@@ -17,8 +49,8 @@ const HomePage = () => {
     category: campaign.category as 'emergency' | 'research' | 'equipment' | 'care' | 'awareness',
     location: campaign.location,
     organizer: {
-      name: typeof campaign.organizer === 'string' ? campaign.organizer : campaign.organizer,
-      avatar_url: typeof campaign.organizer === 'string' ? undefined : campaign.organizer
+      name: typeof campaign.organizer === 'string' ? campaign.organizer : campaign.organizer.name,
+      avatar_url: typeof campaign.organizer === 'string' ? undefined : campaign.organizer.avatar_url
     },
     target: campaign.target,
     raised: campaign.raised,
@@ -42,7 +74,7 @@ const HomePage = () => {
             Transformez votre générosité en <span className="text-primary">impact médical concret</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 animate-fade-in">
-           MainSolidaire  met en relation les donateurs et les structures médicales pour transformer l'expérience du don dans le domaine de la santé.
+            MainSolidaire met en relation les donateurs et les structures médicales pour transformer l'expérience du don dans le domaine de la santé.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mb-12 animate-fade-in">
             <Button size="lg" onClick={() => navigate('/campaigns')}>
@@ -50,7 +82,7 @@ const HomePage = () => {
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" onClick={() => navigate('/about')}>
-              En savoir plu s
+              En savoir plus
             </Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full max-w-3xl">
@@ -74,7 +106,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Featured Campaigns */}
+      {/* Featured Campaigns Section */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-10">
@@ -91,15 +123,37 @@ const HomePage = () => {
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredCampaigns.map(campaign => (
-              <CampaignCard key={campaign.id} campaign={campaign} />
-            ))}
+
+          {/* Search Input */}
+          <div className="mb-8 max-w-md">
+            <Input
+              placeholder="Rechercher une campagne..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+              <p>Chargement des campagnes...</p>
+            </div>
+          ) : filteredCampaigns.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-lg font-medium">Aucune campagne trouvée</h3>
+              <p className="text-muted-foreground">Essayez de modifier vos critères de recherche</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCampaigns.map(campaign => (
+                <CampaignCard key={campaign.id} campaign={campaign} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* How it Works Section */}
       <section className="py-16 bg-accent/50">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-12">
@@ -140,7 +194,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials Section */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-12">
@@ -164,47 +218,7 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-card border rounded-lg p-6">
-              <p className="italic mb-4">
-                "En tant que responsable d'un projet de recherche, cette plateforme nous a permis de collecter les fonds nécessaires tout en maintenant un lien de confiance avec nos donateurs."
-              </p>
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-medical-100 flex items-center justify-center mr-3">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <div className="font-medium">Amir Elamrani</div>
-                  <div className="text-sm text-muted-foreground">Chercheuse en oncologie</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 md:px-6 text-center">
-          <h2 className="text-3xl font-bold mb-6">Prêt à faire la différence?</h2>
-          <p className="text-lg mb-8 max-w-2xl mx-auto opacity-90">
-            Rejoignez notre communauté et contribuez à améliorer l'accès aux soins de santé pour ceux qui en ont besoin.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              variant="secondary"
-              onClick={() => navigate('/campaigns')}
-            >
-              Explorer les campagnes
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="bg-transparent border-primary-foreground hover:bg-primary-foreground/10"
-              onClick={() => navigate('/register')}
-            >
-              Créer un compte
-            </Button>
+            {/* Ajoute d'autres témoignages si besoin */}
           </div>
         </div>
       </section>
