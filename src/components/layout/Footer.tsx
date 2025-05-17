@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
             <Heart className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">Health Solidarity</span>
+            <span className="font-bold text-xl">MainSolidaire</span>
           </div>
           <p className="text-muted-foreground">
             Transformez votre générosité en impact réel.
@@ -86,7 +86,7 @@ const Footer = () => {
         </div>
       </div>
       <div className="container mt-8 pt-8 border-t text-center text-muted-foreground text-sm">
-        <p>© 2025 Health Solidarity Hub. Tous droits réservés.</p>
+        <p>© 2025 MainSolidaire. Tous droits réservés.</p>
       </div>
     </footer>
   );
