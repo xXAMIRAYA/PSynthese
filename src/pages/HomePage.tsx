@@ -1,9 +1,7 @@
-import { Heart, ChevronRight, Target, Award, Users } from 'lucide-react';
-import { campaigns as mockCampaigns } from '@/services/mockData';
+import { Heart, ChevronRight, Target, Award } from 'lucide-react';
 import CampaignCard from '@/components/campaigns/CampaignCard';
 import { Campaign } from '@/types';
 import { useState, useEffect } from 'react';
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { fetchCampaigns } from '@/services/campaignService';
 import { Button } from "@/components/ui/button";
@@ -41,25 +39,6 @@ const HomePage = () => {
     );
     setFilteredCampaigns(results);
   }, [search, campaigns]);
-
-  const featuredCampaigns = mockCampaigns.slice(0, 3).map(campaign => ({
-    id: campaign.id,
-    title: campaign.title,
-    description: campaign.description,
-    category: campaign.category as 'emergency' | 'research' | 'equipment' | 'care' | 'awareness',
-    location: campaign.location,
-    organizer: {
-      name: typeof campaign.organizer === 'string' ? campaign.organizer : campaign.organizer.name,
-      avatar_url: typeof campaign.organizer === 'string' ? undefined : campaign.organizer.avatar_url
-    },
-    target: campaign.target,
-    raised: campaign.raised,
-    donors_count: campaign.donorsCount || campaign.donors_count || 0,
-    image_url: campaign.imageUrl || campaign.image_url || '',
-    end_date: campaign.endDate || campaign.end_date || '',
-    created_at: campaign.createdAt || campaign.created_at || '',
-    status: campaign.status as 'active' | 'completed' | 'urgent'
-  }));
 
   return (
     <div>
@@ -106,7 +85,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Featured Campaigns Section */}
+      {/* Campaigns Section */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-10">
@@ -114,8 +93,8 @@ const HomePage = () => {
               <h2 className="text-3xl font-bold mb-2">Campagnes à la une</h2>
               <p className="text-muted-foreground">Découvrez les initiatives qui ont besoin de votre soutien.</p>
             </div>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => navigate('/campaigns')}
               className="mt-4 md:mt-0"
             >
@@ -124,7 +103,6 @@ const HomePage = () => {
             </Button>
           </div>
 
-          {/* Search Input */}
           <div className="mb-8 max-w-md">
             <Input
               placeholder="Rechercher une campagne..."
@@ -145,7 +123,7 @@ const HomePage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCampaigns.map(campaign => (
+              {filteredCampaigns.slice(0, 3).map(campaign => (
                 <CampaignCard key={campaign.id} campaign={campaign} />
               ))}
             </div>
@@ -153,7 +131,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* How it Works Section */}
+      {/* How It Works Section */}
       <section className="py-16 bg-accent/50">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-12">
@@ -190,35 +168,6 @@ const HomePage = () => {
                 Visualisez l'évolution de la campagne et recevez des mises à jour sur l'utilisation des fonds.
               </p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-2">Témoignages</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Ce que disent nos utilisateurs à propos de Health Solidarity Hub.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-card border rounded-lg p-6">
-              <p className="italic mb-4">
-                "Grâce à MainSolidaire, j'ai pu suivre l'impact concret de mes dons pour l'hôpital de ma ville. La transparence et les mises à jour régulières m'ont vraiment rassuré."
-              </p>
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-medical-100 flex items-center justify-center mr-3">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <div className="font-medium">Dr Salah Edinne Alami</div>
-                  <div className="text-sm text-muted-foreground">Donateur régulier</div>
-                </div>
-              </div>
-            </div>
-            {/* Ajoute d'autres témoignages si besoin */}
           </div>
         </div>
       </section>
