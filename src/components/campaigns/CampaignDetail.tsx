@@ -11,7 +11,7 @@ import DonateForm from './DonateForm';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchCampaignById } from '@/services/campaignService';
 import { fetchDonationsByCampaign } from '@/services/donationService';
-import { ArrowLeft, Calendar, MapPin, User as UserIcon, Award } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, User as UserIcon, Award, Share2 } from "lucide-react";
 
 const CampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,13 +25,13 @@ const CampaignDetail = () => {
 
   useEffect(() => {
     if (!id) return;
-    
+
     const loadCampaign = async () => {
       setIsLoading(true);
       try {
         const campaignData = await fetchCampaignById(id);
         setCampaign(campaignData);
-        
+
         const donationsData = await fetchDonationsByCampaign(id);
         setDonations(donationsData);
       } catch (error) {
@@ -45,7 +45,7 @@ const CampaignDetail = () => {
         setIsLoading(false);
       }
     };
-    
+
     loadCampaign();
   }, [id, toast]);
 
@@ -74,7 +74,7 @@ const CampaignDetail = () => {
   }
 
   const progressPercentage = Math.min(Math.round((campaign.raised / campaign.target) * 100), 100);
-  
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
   };
@@ -106,29 +106,58 @@ const CampaignDetail = () => {
     try {
       const updatedCampaign = await fetchCampaignById(id!);
       setCampaign(updatedCampaign);
-      
+
       const updatedDonations = await fetchDonationsByCampaign(id!);
       setDonations(updatedDonations);
     } catch (error) {
       console.error('Error refreshing campaign data:', error);
     }
   };
-  
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: campaign?.title,
+          text: campaign?.shortDescription,
+          url: window.location.href,
+        })
+        .catch((error) => console.log("Erreur de partage:", error));
+    } else {
+      // Fallback pour navigateurs qui ne supportent pas l'API Web Share
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Lien copié!",
+        description: "L'URL de la campagne a été copiée dans le presse-papier.",
+      });
+    }
+  };
   return (
     <div className="container max-w-4xl mx-auto p-4 space-y-8">
-      <Button 
-        variant="ghost" 
-        onClick={() => navigate('/campaigns')} 
-        className="flex items-center gap-2"
-      >
-        <ArrowLeft size={16} />
-        Retour aux campagnes
-      </Button>
-      
+     <div className="flex justify-between items-center mt-4">
+  <Button
+    variant="ghost"
+    onClick={() => navigate('/campaigns')}
+    className="flex items-center gap-2"
+  >
+    <ArrowLeft size={16} />
+    Retour aux campagnes
+  </Button>
+
+  <Button
+    variant="outline"
+    onClick={handleShare}
+    className="flex items-center"
+  >
+    <Share2 className="h-4 w-4 mr-2" />
+    Partager
+  </Button>
+</div>
+
+
       <div className="space-y-4">
         <div className="relative rounded-lg overflow-hidden h-64 md:h-80">
-          <img 
-            src={campaign.image_url || '/placeholder.svg'} 
+          <img
+            src={campaign.image_url || '/placeholder.svg'}
             alt={campaign.title}
             className="w-full h-full object-cover"
           />
@@ -137,14 +166,14 @@ const CampaignDetail = () => {
               {campaign.status === 'urgent' ? 'Urgent' : campaign.status === 'completed' ? 'Complété' : 'Actif'}
             </Badge>
             <Badge>
-              {campaign.category === 'emergency' ? 'Urgence' : 
-              campaign.category === 'research' ? 'Recherche' : 
-              campaign.category === 'equipment' ? 'Équipement' :
-              campaign.category === 'awareness' ? 'Sensibilisation' : 'Soins'}
+              {campaign.category === 'emergency' ? 'Urgence' :
+                campaign.category === 'research' ? 'Recherche' :
+                  campaign.category === 'equipment' ? 'Équipement' :
+                    campaign.category === 'awareness' ? 'Sensibilisation' : 'Soins'}
             </Badge>
           </div>
         </div>
-        
+
         <div className="grid gap-6 md:grid-cols-3">
           <div className="md:col-span-2">
             <h1 className="text-3xl font-bold">{campaign.title}</h1>
@@ -168,7 +197,7 @@ const CampaignDetail = () => {
                 <h3 className="text-2xl font-bold">{formatCurrency(campaign.raised)}</h3>
                 <p className="text-muted-foreground">collectés sur {formatCurrency(campaign.target)}</p>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="font-medium">{progressPercentage}% complété</span>
@@ -176,42 +205,41 @@ const CampaignDetail = () => {
                 </div>
                 <Progress value={progressPercentage} className="progress-bar-animation h-2" />
               </div>
-              
-              <Button 
-                className="w-full" 
+
+              <Button
+                className="w-full"
                 onClick={handleDonate}
                 disabled={campaign.status === 'completed'}
               >
                 Faire un don
               </Button>
-              
+
               {showDonateForm && (
-                <DonateForm 
-                  campaignId={campaign.id} 
+                <DonateForm
+                  campaignId={campaign.id}
                   onSuccess={handleDonateSuccess}
-                  onCancel={() => setShowDonateForm(false)}  
+                  onCancel={() => setShowDonateForm(false)}
                 />
               )}
             </CardContent>
           </Card>
         </div>
-        
+
         <Tabs defaultValue="description">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="description">Description</TabsTrigger>
             <TabsTrigger value="updates">Mises à jour {campaign.updates?.length ? `(${campaign.updates.length})` : ''}</TabsTrigger>
             <TabsTrigger value="donors">Donateurs</TabsTrigger>
           </TabsList>
-          
           <TabsContent value="description" className="mt-6">
             <div className="prose max-w-none">
               <p className="whitespace-pre-line">{campaign.description}</p>
-              
+
               <h3 className="text-xl font-semibold mt-6">Impact</h3>
               <p>Votre don permettra de soutenir directement cette initiative cruciale. Chaque contribution compte et nous vous remercions pour votre soutien à cette cause importante.</p>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="updates" className="mt-6">
             {campaign.updates && campaign.updates.length > 0 ? (
               <div className="space-y-4">
@@ -221,10 +249,10 @@ const CampaignDetail = () => {
                       <p className="text-sm text-muted-foreground">{formatDate(update.created_at)}</p>
                       <p>{update.content}</p>
                       {update.image_url && (
-                        <img 
-                          src={update.image_url} 
-                          alt="Update" 
-                          className="rounded-md w-full h-48 object-cover mt-2" 
+                        <img
+                          src={update.image_url}
+                          alt="Update"
+                          className="rounded-md w-full h-48 object-cover mt-2"
                         />
                       )}
                     </CardContent>
@@ -237,7 +265,7 @@ const CampaignDetail = () => {
               </p>
             )}
           </TabsContent>
-          
+
           <TabsContent value="donors" className="mt-6">
             {donations && donations.length > 0 ? (
               <div className="space-y-4">
