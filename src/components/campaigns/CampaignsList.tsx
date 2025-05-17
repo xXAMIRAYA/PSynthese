@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import CampaignCard from './CampaignCard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Plus, ChevronRight } from "lucide-react";
 import { fetchCampaigns } from '@/services/campaignService';
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -26,19 +25,17 @@ const CampaignsList = () => {
         setCampaigns(data);
         setFilteredCampaigns(data);
       } catch (error) {
-        console.error('Error loading campaigns:', error);
+        console.error('Erreur lors du chargement des campagnes :', error);
       } finally {
         setIsLoading(false);
       }
     };
-    
     loadCampaigns();
   }, []);
 
   useEffect(() => {
     let result = campaigns;
-    
-    // Filter by tab category
+
     if (currentTab !== 'all') {
       if (currentTab === 'urgent') {
         result = result.filter(campaign => campaign.status === 'urgent');
@@ -46,8 +43,7 @@ const CampaignsList = () => {
         result = result.filter(campaign => campaign.category === currentTab);
       }
     }
-    
-    // Filter by search query
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -57,12 +53,13 @@ const CampaignsList = () => {
           campaign.location.toLowerCase().includes(query)
       );
     }
-    
+
     setFilteredCampaigns(result);
   }, [currentTab, searchQuery, campaigns]);
 
   return (
     <div className="space-y-6">
+      {/* Recherche + Bouton */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div className="relative flex-grow max-w-md">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -75,14 +72,25 @@ const CampaignsList = () => {
           />
         </div>
 
-        {/* Affichage conditionnel du bouton créer campagne si pas donnateur */}
-        {user?.role !== 'donateur' && (
-          <Button onClick={() => navigate('/campaigns/create')} className="whitespace-nowrap">
-            <Plus className="mr-2 h-4 w-4" /> Créer une campagne
-          </Button>
+        {user && (
+          user.role === "donnateur" ? (
+            <Button  
+              variant="ghost" 
+              onClick={() => navigate('/campaigns')}
+              className="mt-4 md:mt-0"
+            >
+              Voir toutes les campagnes
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button onClick={() => navigate('/campaigns/create')} className="whitespace-nowrap">
+              <Plus className="mr-2 h-4 w-4" /> Créer une campagne
+            </Button>
+          )
         )}
       </div>
 
+      {/* Onglets */}
       <Tabs defaultValue="all" onValueChange={setCurrentTab}>
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
           <TabsTrigger value="all">Toutes</TabsTrigger>
@@ -94,6 +102,7 @@ const CampaignsList = () => {
         </TabsList>
       </Tabs>
 
+      {/* Affichage des campagnes */}
       {isLoading ? (
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
@@ -105,23 +114,11 @@ const CampaignsList = () => {
           <p className="text-muted-foreground">Essayez de modifier vos critères de recherche</p>
         </div>
       ) : (
-        user?.role === 'donateur' ? (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCampaigns.map(campaign => (
-                <CampaignCard key={campaign.id} campaign={campaign} />
-              ))}
-            </div>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/campaigns')}
-              className="mt-4 md:mt-0"
-            >
-              Voir toutes les campagnes
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </>
-        ) : null
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCampaigns.map(campaign => (
+            <CampaignCard key={campaign.id} campaign={campaign} />
+          ))}
+        </div>
       )}
     </div>
   );
