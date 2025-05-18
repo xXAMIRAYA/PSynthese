@@ -26,11 +26,11 @@ const UserDashboard = () => {
 
       setIsLoading(true);
       try {
-        if (profile?.role === 'campaign-manager') {
+        if (profile?.role === 'campaign_manager') {
           const campaigns = await getUserCampaigns(user.id);
           setUserCampaigns(campaigns);
         }
-        if (profile?.role === 'donateur') {
+        if (profile?.role === 'donator') {
           const donations = await fetchUserDonations(user.id);
           setUserDonations(donations);
           const stats = await getDonationStats(user.id);
@@ -42,6 +42,7 @@ const UserDashboard = () => {
         setIsLoading(false);
       }
     };
+  
 
     loadUserData();
   }, [user, profile?.role]);
