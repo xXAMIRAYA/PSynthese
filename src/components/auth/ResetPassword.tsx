@@ -33,8 +33,8 @@ const ResetPassword: React.FC = () => {
     if (error) {
       setMessage("Erreur : " + error.message);
     } else {
-      setMessage("Mot de passe mis à jour ! Redirection...");
-      setTimeout(() => navigate('/login'), 3000);
+      setMessage("Mot de passe mis à jour ! Redirection vers le tableau de bord...");
+      setTimeout(() => navigate('/dashboard'), 2000); // Redirection vers /dashboard
     }
 
     setIsSubmitting(false);

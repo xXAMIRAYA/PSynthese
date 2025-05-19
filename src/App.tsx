@@ -9,7 +9,7 @@ import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Pages
-import HomePage from "./pages/HomePage";
+// import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import CampaignsPage from "./pages/CampaignsPage";
 import CampaignDetailPage from "./pages/CampaignDetailPage";
@@ -20,6 +20,7 @@ import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 import CreateCampaignPage from "./pages/CreateCampaignPage";
 import ResetPassword from "./components/auth/ResetPassword";
+import HomePage from "./pages/HomePage";
 
 const queryClient = new QueryClient();
 
