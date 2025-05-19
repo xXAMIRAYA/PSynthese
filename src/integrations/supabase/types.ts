@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      messages: {
+  Row: {
+    id: string
+    sender_id: string
+    receiver_id: string
+    content: string
+    created_at: string | null
+    read: boolean
+  }
+  Insert: {
+    id?: string
+    sender_id: string
+    receiver_id: string
+    content: string
+    created_at?: string | null
+    read?: boolean
+  }
+  Update: {
+    id?: string
+    sender_id?: string
+    receiver_id?: string
+    content?: string
+    created_at?: string | null
+    read?: boolean
+  }
+  Relationships: [
+    {
+      foreignKeyName: "messages_sender_id_fkey"
+      columns: ["sender_id"]
+      isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },
+    {
+      foreignKeyName: "messages_receiver_id_fkey"
+      columns: ["receiver_id"]
+      isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },
+  ]
+}
       campaign_updates: {
         Row: {
           campaign_id: string
@@ -96,10 +138,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+
       }
       donations: {
         Row: {
-          amount: number
+          amount: string
           anonymous: boolean | null
           campaign_id: string
           created_at: string | null
@@ -142,6 +185,7 @@ export type Database = {
           },
         ]
       }
+      
       profiles: {
         Row: {
           avatar_url: string | null

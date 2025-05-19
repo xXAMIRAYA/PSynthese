@@ -1,23 +1,35 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from 'react';
-import { dashboardStats, campaigns as mockCampaigns, users as mockUsers } from '@/services/mockData';
-import { ArrowUp, Users, Target, HeartHandshake, Heart, Award, Calendar, PlusCircle, Edit, Trash } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { ArrowUp, Users, Target, HeartHandshake, Heart, Award, Calendar, PlusCircle, Edit, Trash, AlertCircle } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState(dashboardStats);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  const formatCurrency = (amount: number) => {
+  // États pour stocker les données de Supabase
+  const [stats, setStats] = useState({
+    totalRaised: 0,
+    donorsCount: 0,
+    activeCampaigns: 0,
+    completedCampaigns: 0,
+    recentDonations: []
+  });
+  const [campaigns, setCampaigns] = useState([]);
+  const [donations, setDonations] = useState([]);
+  const [users, setUsers] = useState([]);
+  
+  const formatCurrency = (amount) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
   };
   
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
       day: 'numeric',
       month: 'long',
@@ -25,13 +37,258 @@ const AdminDashboard = () => {
     });
   };
 
+  // Fonction pour charger les statistiques globales
+  const fetchStats = async () => {
+    try {
+      // Total des dons
+      const { data: donationsData, error: donationsError } = await supabase
+        .from('donations')
+        .select('amount');
+        
+      if (donationsError) throw donationsError;
+      
+      const totalRaised = donationsData.reduce((sum, donation) => sum + parseFloat(donation.amount), 0);
+
+      // Nombre de donateurs uniques
+      const { data: donorsData, error: donorsError } = await supabase
+        .from('donations')
+        .select('user_id')
+        .order('user_id');
+        
+      if (donorsError) throw donorsError;
+      
+      const uniqueDonors = new Set(donorsData.map(donation => donation.user_id)).size;
+
+      // Nombre de campagnes actives et complétées
+      const { data: campaignsData, error: campaignsError } = await supabase
+        .from('campaigns')
+        .select('status');
+        
+      if (campaignsError) throw campaignsError;
+      
+      const activeCampaigns = campaignsData.filter(campaign => campaign.status === 'active' || campaign.status === 'urgent').length;
+      const completedCampaigns = campaignsData.filter(campaign => campaign.status === 'completed').length;
+
+      // Récupérer les dons récents avec les détails nécessaires
+      const { data: recentDonations, error: recentDonationsError } = await supabase
+        .from('donations')
+        .select(`
+          id,
+          amount,
+          message,
+          anonymous,
+          created_at,
+          user_id,
+          campaign_id
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (recentDonationsError) throw recentDonationsError;
+
+      setStats({
+        totalRaised,
+        donorsCount: uniqueDonors,
+        activeCampaigns,
+        completedCampaigns,
+        recentDonations
+      });
+    } catch (error) {
+      console.error("Erreur lors du chargement des statistiques:", error);
+      setError("Impossible de charger les statistiques. Veuillez réessayer plus tard.");
+    }
+  };
+
+  // Fonction pour charger les campagnes
+  const fetchCampaigns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('campaigns')
+        .select(`
+          id,
+          title,
+          description,
+          category,
+          location,
+          target,
+          raised,
+          image_url,
+          end_date,
+          status,
+          organizer_id
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      setCampaigns(data);
+    } catch (error) {
+      console.error("Erreur lors du chargement des campagnes:", error);
+      setError("Impossible de charger les campagnes. Veuillez réessayer plus tard.");
+    }
+  };
+
+  // Fonction pour charger les utilisateurs
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          name,
+          email,
+          avatar_url,
+          role,
+          created_at
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      // Pour chaque utilisateur, calculer son nombre de dons et le montant total
+      const usersWithDonationInfo = await Promise.all(data.map(async (user) => {
+        const { data: userDonations, error: donationsError } = await supabase
+          .from('donations')
+          .select('amount')
+          .eq('user_id', user.id);
+          
+        if (donationsError) throw donationsError;
+        
+        const donationsCount = userDonations.length;
+        const totalDonated = userDonations.reduce((sum, donation) => sum + parseFloat(donation.amount), 0);
+        
+        return {
+          ...user,
+          donationsCount,
+          totalDonated
+        };
+      }));
+      
+      setUsers(usersWithDonationInfo);
+    } catch (error) {
+      console.error("Erreur lors du chargement des utilisateurs:", error);
+      setError("Impossible de charger les utilisateurs. Veuillez réessayer plus tard.");
+    }
+  };
+
+  // Fonction pour charger les dons détaillés
+  const fetchDetailedDonations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('donations')
+        .select(`
+          id,
+          amount,
+          message,
+          anonymous,
+          created_at,
+          user_id,
+          campaign_id
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      if (error) throw error;
+      
+      setDonations(data);
+    } catch (error) {
+      console.error("Erreur lors du chargement des dons:", error);
+      setError("Impossible de charger les dons. Veuillez réessayer plus tard.");
+    }
+  };
+
+  // Supprimer une campagne
+ const handleDeleteCampaign = async (campaignId: string) => {
+  try {
+    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cette campagne ? Cette action est irréversible.");
+    if (!confirmed) return;
+
+    setLoading(true);
+
+    const { error } = await supabase
+      .from("campaigns")
+      .delete()
+      .eq("id", campaignId);
+
+    if (error) throw error;
+
+    // Supprimer la campagne localement pour mise à jour instantanée sans rechargement complet
+    setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
+    setStats((prev) => ({
+      ...prev,
+      activeCampaigns: prev.activeCampaigns - 1 // optionnel : à adapter si nécessaire
+    }));
+
+    alert("Campagne supprimée avec succès");
+  } catch (error) {
+    console.error("Erreur lors de la suppression:", error);
+    alert("Impossible de supprimer la campagne. Veuillez réessayer.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+
+  // Charger toutes les données au montage du composant
+  useEffect(() => {
+    const loadAllData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          fetchStats(),
+          fetchCampaigns(),
+          fetchUsers(),
+          fetchDetailedDonations()
+        ]);
+      } catch (error) {
+        console.error("Erreur lors du chargement des données:", error);
+        setError("Une erreur est survenue lors du chargement des données.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAllData();
+  }, []);
+
+  if (loading && !campaigns.length && !users.length) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-medical-500 mx-auto mb-4"></div>
+          <p>Chargement des données...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center text-destructive">
+          <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+          <p>{error}</p>
+          <Button className="mt-4" onClick={() => window.location.reload()}>
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculer le taux de conversion (nombre de visiteurs qui ont fait un don)
+  // Note: Ceci est une approximation, pour un calcul précis vous auriez besoin de 
+  // données d'analytique supplémentaires
+  const conversionRate = stats.donorsCount > 0 ? ((stats.donorsCount / users.length) * 100).toFixed(1) : 0;
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Tableau de bord administrateur</h1>
-        <Button onClick={() => navigate('/admin/campaigns/new')}>
+        {/* <Button onClick={() => navigate('/admin/campaigns/new')}>
           <PlusCircle className="mr-2 h-4 w-4" /> Nouvelle Campagne
-        </Button>
+        </Button> */}
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -44,7 +301,7 @@ const AdminDashboard = () => {
             <div className="text-2xl font-bold">{formatCurrency(stats.totalRaised)}</div>
             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
               <ArrowUp className="h-3 w-3 text-health-500" />
-              <span>+12.5% depuis le mois dernier</span>
+              <span>Mise à jour en temps réel</span>
             </div>
           </CardContent>
         </Card>
@@ -56,10 +313,9 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.donorsCount}</div>
-            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-              <ArrowUp className="h-3 w-3 text-health-500" />
-              <span>+8.2% depuis le mois dernier</span>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Sur {users.length} utilisateurs inscrits
+            </p>
           </CardContent>
         </Card>
         
@@ -82,10 +338,9 @@ const AdminDashboard = () => {
             <HeartHandshake className="h-4 w-4 text-medical-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24.8%</div>
-            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-              <ArrowUp className="h-3 w-3 text-health-500" />
-              <span>+2.1% depuis le mois dernier</span>
+            <div className="text-2xl font-bold">{conversionRate}%</div>
+            <div className="text-xs text-muted-foreground">
+              Utilisateurs ayant fait au moins un don
             </div>
           </CardContent>
         </Card>
@@ -113,63 +368,81 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockCampaigns.map((campaign) => (
-                    <tr key={campaign.id} className="border-b hover:bg-muted/50 transition-colors">
-                      <td className="p-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          <div className="h-12 w-12 rounded-md overflow-hidden">
-                            <img 
-                              src={campaign.imageUrl} 
-                              alt={campaign.title} 
-                              className="h-full w-full object-cover"
-                            />
+                  {campaigns.length > 0 ? (
+                    campaigns.map((campaign) => (
+                      <tr key={campaign.id} className="border-b hover:bg-muted/50 transition-colors">
+                        <td className="p-4 align-middle">
+                          <div className="flex items-center gap-3">
+                            <div className="h-12 w-12 rounded-md overflow-hidden bg-muted">
+                              {campaign.image_url ? (
+                                <img 
+                                  src={campaign.image_url} 
+                                  alt={campaign.title} 
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Target className="h-6 w-6 m-auto text-muted-foreground" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-medium">{campaign.title.substring(0, 40)}{campaign.title.length > 40 ? '...' : ''}</div>
+                              <div className="text-xs text-muted-foreground">{campaign.location}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-medium">{campaign.title.substring(0, 40)}{campaign.title.length > 40 ? '...' : ''}</div>
-                            <div className="text-xs text-muted-foreground">{campaign.location}</div>
+                        </td>
+                        <td className="p-4 align-middle">
+                          <Badge variant="outline" className="capitalize">
+                            {campaign.category}
+                          </Badge>
+                        </td>
+                        <td className="p-4 align-middle">
+                          {formatDate(campaign.end_date)}
+                        </td>
+                        <td className="p-4 align-middle">
+                          <div className="w-40">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span>{Math.round((campaign.raised / campaign.target) * 100)}%</span>
+                              <span>{formatCurrency(campaign.raised)}/{formatCurrency(campaign.target)}</span>
+                            </div>
+                            <Progress value={(campaign.raised / campaign.target) * 100} />
                           </div>
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <Badge variant="outline" className="capitalize">
-                          {campaign.category}
-                        </Badge>
-                      </td>
-                      <td className="p-4 align-middle">
-                        {formatDate(campaign.endDate)}
-                      </td>
-                      <td className="p-4 align-middle">
-                        <div className="w-40">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span>{Math.round((campaign.raised / campaign.target) * 100)}%</span>
-                            <span>{formatCurrency(campaign.raised)}/{formatCurrency(campaign.target)}</span>
+                        </td>
+                        <td className="p-4 align-middle">
+                          <Badge 
+                            variant={
+                              campaign.status === 'urgent' ? 'destructive' : 
+                              campaign.status === 'completed' ? 'secondary' : 
+                              'default'
+                            }
+                          >
+                            {campaign.status}
+                          </Badge>
+                        </td>
+                        <td className="p-4 align-middle">
+                          <div className="flex gap-2">
+                            {/* <Button variant="ghost" size="icon" onClick={() => navigate(`/admin/campaigns/${campaign.id}/edit`)}>
+                              <Edit className="h-4 w-4" />
+                            </Button> */}
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="text-destructive"
+                              onClick={() => handleDeleteCampaign(campaign.id)}
+                              disabled={loading}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
                           </div>
-                          <Progress value={(campaign.raised / campaign.target) * 100} />
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <Badge 
-                          variant={
-                            campaign.status === 'urgent' ? 'destructive' : 
-                            campaign.status === 'completed' ? 'secondary' : 
-                            'default'
-                          }
-                        >
-                          {campaign.status}
-                        </Badge>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => navigate(`/admin/campaigns/${campaign.id}/edit`)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="text-destructive">
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6}  className="p-8 text-center text-muted-foreground">
+                        Aucune campagne trouvée
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
@@ -190,46 +463,57 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {stats.recentDonations.map((donation) => {
-                    const user = mockUsers.find(u => u.id === donation.userId);
-                    const campaign = mockCampaigns.find(c => c.id === donation.campaignId);
-                    return (
-                      <tr key={donation.id} className="border-b hover:bg-muted/50 transition-colors">
-                        <td className="p-4 align-middle">
-                          {donation.anonymous ? (
-                            <span className="text-muted-foreground">Anonyme</span>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <div className="h-8 w-8 rounded-full overflow-hidden bg-muted">
-                                {user?.avatarUrl ? (
-                                  <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
-                                ) : (
-                                  <Users className="h-4 w-4 m-auto" />
-                                )}
+                  {donations.length > 0 ? (
+                    donations.map((donation) => {
+                      const user = users.find(u => u.id === donation.user_id);
+                      const campaign = campaigns.find(c => c.id === donation.campaign_id);
+                      return (
+                        <tr key={donation.id} className="border-b hover:bg-muted/50 transition-colors">
+                          <td className="p-4 align-middle">
+                            {donation.anonymous ? (
+                              <span className="text-muted-foreground">Anonyme</span>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 rounded-full overflow-hidden bg-muted">
+                                  {user?.avatar_url ? (
+                                    <img src={user.avatar_url} alt={user.name} className="h-full w-full object-cover" />
+                                  ) : (
+                                    <Users className="h-4 w-4 m-auto" />
+                                  )}
+                                </div>
+                                <span>{user?.name || "Utilisateur inconnu"}</span>
                               </div>
-                              <span>{user?.name}</span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="p-4 align-middle">
-                          {campaign?.title.substring(0, 30)}{campaign?.title.length > 30 ? '...' : ''}
-                        </td>
-                        <td className="p-4 align-middle font-medium">
-                          {formatCurrency(donation.amount)}
-                        </td>
-                        <td className="p-4 align-middle">
-                          {formatDate(donation.createdAt)}
-                        </td>
-                        <td className="p-4 align-middle">
-                          {donation.message ? (
-                            <span className="italic text-xs">{donation.message.substring(0, 40)}{donation.message.length > 40 ? '...' : ''}</span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">Aucun message</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                            )}
+                          </td>
+                          <td className="p-4 align-middle">
+                            {campaign ? 
+                              `${campaign.title.substring(0, 30)}${campaign.title.length > 30 ? '...' : ''}` : 
+                              "Campagne inconnue"
+                            }
+                          </td>
+                          <td className="p-4 align-middle font-medium">
+                            {formatCurrency(donation.amount)}
+                          </td>
+                          <td className="p-4 align-middle">
+                            {formatDate(donation.created_at)}
+                          </td>
+                          <td className="p-4 align-middle">
+                            {donation.message ? (
+                              <span className="italic text-xs">{donation.message.substring(0, 40)}{donation.message.length > 40 ? '...' : ''}</span>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">Aucun message</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={5}  className="p-8 text-center text-muted-foreground">
+                        Aucun don trouvé
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -251,43 +535,55 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockUsers.map((user) => (
-                    <tr key={user.id} className="border-b hover:bg-muted/50 transition-colors">
-                      <td className="p-4 align-middle">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full overflow-hidden bg-muted">
-                            {user.avatarUrl ? (
-                              <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
-                            ) : (
-                              <Users className="h-4 w-4 m-auto" />
-                            )}
+                  {users.length > 0 ? (
+                    users.map((user) => (
+                      <tr key={user.id} className="border-b hover:bg-muted/50 transition-colors">
+                        <td className="p-4 align-middle">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full overflow-hidden bg-muted">
+                              {user.avatar_url ? (
+                                <img src={user.avatar_url} alt={user.name} className="h-full w-full object-cover" />
+                              ) : (
+                                <Users className="h-4 w-4 m-auto" />
+                              )}
+                            </div>
+                            <span className="font-medium">{user.name}</span>
                           </div>
-                          <span className="font-medium">{user.name}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                        {user.email}
-                      </td>
-                      <td className="p-4 align-middle">
-                        <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="capitalize">
-                          {user.role}
-                        </Badge>
-                      </td>
-                      <td className="p-4 align-middle">
-                        {user.donationsCount || 0} ({formatCurrency(user.totalDonated || 0)})
-                      </td>
-                      <td className="p-4 align-middle">
-                        {formatDate(user.createdAt)}
-                      </td>
-                      <td className="p-4 align-middle">
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        </td>
+                        <td className="p-4 align-middle">
+                          {user.email}
+                        </td>
+                        <td className="p-4 align-middle">
+                          <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="capitalize">
+                            {user.role}
+                          </Badge>
+                        </td>
+                        <td className="p-4 align-middle">
+                          {user.donationsCount || 0} ({formatCurrency(user.totalDonated || 0)})
+                        </td>
+                        <td className="p-4 align-middle">
+                          {formatDate(user.created_at)}
+                        </td>
+                        <td className="p-4 align-middle">
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => navigate(`/admin/users/${user.id}/edit`)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={6}  className="p-8 text-center text-muted-foreground">
+                        Aucun utilisateur trouvé
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>

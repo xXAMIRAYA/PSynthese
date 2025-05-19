@@ -4,7 +4,13 @@
   padding: 2rem;
   text-align: center;
 }
-
+/* Dans src/index.css ou src/styles/globals.css */
+.chat-icon {
+  z-index: 1000;
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+}
 .logo {
   height: 6em;
   padding: 1.5em;
