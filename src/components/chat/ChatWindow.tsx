@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
 import { EnhancedMessage } from './types';
 import { toast } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
-import MessagesList from './MessagesList'; // Corrigez l'import (pas MessageInput)
-import { useAuth } from '@/contexts/AuthContext'; // Import correct
+import MessagesList from './MessagesList';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ChatWindowProps {
   onClose: () => void;
@@ -16,103 +16,95 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
   const [messages, setMessages] = useState<EnhancedMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [contacts, setContacts] = useState<Array<{id: string, name: string}>>([]);
+  const [contacts, setContacts] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
-  const { user } = useAuth(); // Utilisation correcte du hook
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const { user, profile } = useAuth(); // ⚠️ utiliser profile.role
+
   useEffect(() => {
-    if (!user?.id) return;
+    const fetchContacts = async () => {
+      try {
+        if (!user?.id || !profile?.role) return;
 
-// Dans la fonction fetchContacts du ChatWindow.tsx
-const fetchContacts = async () => {
-  try {
-    if (!user?.id) return;
+        let contactsToLoad: Array<{ id: string; name: string }> = [];
 
-    let contactsToLoad = [];
-    
-    if (user.role === 'user') { // Donateur
-      // Récupérer les organisateurs des campagnes auxquelles l'utilisateur a donné
-      const { data: donations, error: donationsError } = await supabase
-        .from('donations')
-        .select('campaign_id')
-        .eq('user_id', user.id);
+        if (profile.role === 'donator') {
+          // Donateur => récupérer les responsables liés à ses dons
+          const { data: donations, error: donationsError } = await supabase
+            .from('donations')
+            .select('campaign_id')
+            .eq('user_id', user.id);
 
-      if (donationsError) throw donationsError;
+          if (donationsError) throw donationsError;
 
-      if (donations && donations.length > 0) {
-        const campaignIds = donations.map(d => d.campaign_id);
-        const { data: campaigns, error: campaignsError } = await supabase
-          .from('campaigns')
-          .select('organizer_id')
-          .in('id', campaignIds);
+          const campaignIds = donations.map((d) => d.campaign_id);
+          const { data: campaigns, error: campaignsError } = await supabase
+            .from('campaigns')
+            .select('organizer_id')
+            .in('id', campaignIds);
 
-        if (campaignsError) throw campaignsError;
+          if (campaignsError) throw campaignsError;
 
-        const organizerIds = [...new Set(campaigns.map(c => c.organizer_id))];
-        const { data: organizers, error: organizersError } = await supabase
-          .from('profiles')
-          .select('id, name')
-          .in('id', organizerIds)
-          .eq('role', 'campaign_manager'); // Seulement les organisateurs
+          const organizerIds = [...new Set(campaigns.map((c) => c.organizer_id))];
+          const { data: organizers, error: organizersError } = await supabase
+            .from('profiles')
+            .select('id, name')
+            .in('id', organizerIds)
+            .eq('role', 'campaign_manager');
 
-        if (organizersError) throw organizersError;
+          if (organizersError) throw organizersError;
 
-        contactsToLoad = organizers?.map(org => ({
-          id: org.id,
-          name: org.name || 'Organisateur'
-        })) || [];
+          contactsToLoad = organizers.map((org) => ({
+            id: org.id,
+            name: org.name || 'Responsable',
+          }));
+        } else if (profile.role === 'campaign_manager') {
+          // Responsable => récupérer les donateurs de ses campagnes
+          const { data: campaigns, error: campaignsError } = await supabase
+            .from('campaigns')
+            .select('id')
+            .eq('organizer_id', user.id);
+
+          if (campaignsError) throw campaignsError;
+
+          const campaignIds = campaigns.map((c) => c.id);
+          const { data: donations, error: donationsError } = await supabase
+            .from('donations')
+            .select('user_id')
+            .in('campaign_id', campaignIds);
+
+          if (donationsError) throw donationsError;
+
+          const donorIds = [...new Set(donations.map((d) => d.user_id))];
+          const { data: donors, error: donorsError } = await supabase
+            .from('profiles')
+            .select('id, name')
+            .in('id', donorIds)
+            .eq('role', 'donator');
+
+          if (donorsError) throw donorsError;
+
+          contactsToLoad = donors.map((donor) => ({
+            id: donor.id,
+            name: donor.name || 'Donator',
+          }));
+        }
+
+        setContacts(contactsToLoad);
+
+        if (contactsToLoad.length > 0 && !selectedContact) {
+          setSelectedContact(contactsToLoad[0].id);
+        }
+      } catch (error) {
+        console.error('Erreur chargement contacts:', error);
+        toast.error('Erreur chargement contacts');
       }
-    } else if (user.role === 'campaign_manager') { // Organisateur
-      // Récupérer les donateurs de ses campagnes
-      const { data: campaigns, error: campaignsError } = await supabase
-        .from('campaigns')
-        .select('id')
-        .eq('organizer_id', user.id);
-
-      if (campaignsError) throw campaignsError;
-
-      if (campaigns && campaigns.length > 0) {
-        const campaignIds = campaigns.map(c => c.id);
-        const { data: donations, error: donationsError } = await supabase
-          .from('donations')
-          .select('user_id')
-          .in('campaign_id', campaignIds);
-
-        if (donationsError) throw donationsError;
-
-        const donorIds = [...new Set(donations.map(d => d.user_id))];
-        const { data: donors, error: donorsError } = await supabase
-          .from('profiles')
-          .select('id, name')
-          .in('id', donorIds)
-          .eq('role', 'donator'); // Seulement les donateurs
-
-        if (donorsError) throw donorsError;
-
-        contactsToLoad = donors?.map(donor => ({
-          id: donor.id,
-          name: donor.name || 'Donateur'
-        })) || [];
-      }
-    }
-
-    setContacts(contactsToLoad);
-    
-    if (contactsToLoad.length > 0 && !selectedContact) {
-      setSelectedContact(contactsToLoad[0].id);
-    }
-
-  } catch (error) {
-    console.error("Erreur contacts:", error);
-    toast.error("Erreur chargement contacts");
-  }
-};
+    };
 
     fetchContacts();
-  }, [user?.id, selectedContact]);
+  }, [user?.id, profile?.role]);
 
-  // Fetch messages when contact is selected
   useEffect(() => {
     if (!user || !selectedContact) return;
 
@@ -121,25 +113,27 @@ const fetchContacts = async () => {
       try {
         const { data, error } = await supabase
           .from('messages')
-          .select('*, sender:profiles!messages_sender_id_fkey(name), receiver:profiles!messages_receiver_id_fkey(name)')
-          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${selectedContact}),and(sender_id.eq.${selectedContact},receiver_id.eq.${user.id})`)
+          .select(
+            '*, sender:profiles!messages_sender_id_fkey(name), receiver:profiles!messages_receiver_id_fkey(name)'
+          )
+          .or(
+            `and(sender_id.eq.${user.id},receiver_id.eq.${selectedContact}),and(sender_id.eq.${selectedContact},receiver_id.eq.${user.id})`
+          )
           .order('created_at', { ascending: true });
 
         if (error) throw error;
-        
+
         setMessages(data || []);
-        
-        // Mark received messages as read
+
         await supabase
           .from('messages')
           .update({ read: true })
           .eq('receiver_id', user.id)
           .eq('sender_id', selectedContact)
           .eq('read', false);
-          
       } catch (error) {
-        console.error("Erreur lors de la récupération des messages:", error);
-        toast.error("Impossible de charger les messages");
+        console.error('Erreur lors de la récupération des messages:', error);
+        toast.error('Impossible de charger les messages');
       } finally {
         setLoading(false);
       }
@@ -147,7 +141,6 @@ const fetchContacts = async () => {
 
     fetchMessages();
 
-    // Subscribe to new messages
     const subscription = supabase
       .channel('messages')
       .on(
@@ -161,23 +154,18 @@ const fetchContacts = async () => {
         async (payload) => {
           const { data: message, error } = await supabase
             .from('messages')
-            .select('*, sender:profiles!messages_sender_id_fkey(name), receiver:profiles!messages_receiver_id_fkey(name)')
+            .select(
+              '*, sender:profiles!messages_sender_id_fkey(name), receiver:profiles!messages_receiver_id_fkey(name)'
+            )
             .eq('id', payload.new.id)
             .single();
 
-          if (error) {
-            console.error("Erreur lors de la récupération du nouveau message:", error);
-            return;
-          }
+          if (!error && message) {
+            setMessages((prev) => [...prev, message as EnhancedMessage]);
 
-          setMessages((prev) => [...prev, message as EnhancedMessage]);
-
-          // Mark received messages as read
-          if (message.receiver_id === user.id) {
-            await supabase
-              .from('messages')
-              .update({ read: true })
-              .eq('id', message.id);
+            if (message.receiver_id === user.id) {
+              await supabase.from('messages').update({ read: true }).eq('id', message.id);
+            }
           }
         }
       )
@@ -188,7 +176,6 @@ const fetchContacts = async () => {
     };
   }, [user, selectedContact]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -198,16 +185,15 @@ const fetchContacts = async () => {
     if (!newMessage.trim() || !user || !selectedContact) return;
 
     try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          content: newMessage.trim(),
-          sender_id: user.id,
-          receiver_id: selectedContact,
-        });
+      const { error } = await supabase.from('messages').insert({
+        content: newMessage.trim(),
+        sender_id: user.id,
+        receiver_id: selectedContact,
+        is_read: false,
+      });
 
       if (error) throw error;
-      
+
       setNewMessage('');
     } catch (error) {
       console.error("Erreur lors de l'envoi du message:", error);
@@ -219,7 +205,7 @@ const fetchContacts = async () => {
     <div className="fixed bottom-20 right-4 w-80 h-96 bg-white rounded-lg shadow-lg flex flex-col border border-gray-200">
       <div className="flex justify-between items-center p-3 border-b">
         <h3 className="font-semibold">Messagerie</h3>
-        <button 
+        <button
           onClick={onClose}
           className="p-1 hover:bg-gray-100 rounded-full"
           aria-label="Fermer le chat"
@@ -227,16 +213,17 @@ const fetchContacts = async () => {
           <X size={18} />
         </button>
       </div>
-      
-      {/* Contact selector
-      {contacts.length > 0 && (
+
+      {contacts.length > 0 ? (
         <div className="p-2 border-b">
           <select
             value={selectedContact || ''}
             onChange={(e) => setSelectedContact(e.target.value)}
             className="w-full p-2 text-sm border rounded"
           >
-            <option value="" disabled>Sélectionner un contact</option>
+            <option value="" disabled>
+              {profile?.role === 'donator' ? 'Sélectionner un responsable' : 'Sélectionner un donateur'}
+            </option>
             {contacts.map((contact) => (
               <option key={contact.id} value={contact.id}>
                 {contact.name}
@@ -244,39 +231,18 @@ const fetchContacts = async () => {
             ))}
           </select>
         </div>
-      )} */}
-{contacts.length > 0 ? (
-  <select
-    value={selectedContact || ''}
-    onChange={(e) => setSelectedContact(e.target.value)}
-    className="w-full p-2 text-sm border rounded"
-  >
-    <option value="" disabled>
-      {user?.role === 'donator' ? 'Sélectionner un organisateur' : 'Sélectionner un donateur'}
-    </option>
-    {contacts.map((contact) => (
-      <option key={contact.id} value={contact.id}>
-        {contact.name}
-      </option>
-    ))}
-  </select>
-) : (
-  <div className="p-4 text-center text-sm text-gray-500">
-    {user?.role === 'donator' 
-      ? "Vous n'avez pas encore contribué à des campagnes"
-      : "Aucun donateur disponible"}
-  </div>
-)}
-      {/* Messages */}
+      ) : (
+        <div className="p-4 text-center text-sm text-gray-500">
+          {profile?.role === 'donator'
+            ? "Vous n'avez pas encore contribué à des campagnes"
+            : 'Aucun donateur trouvé'}
+        </div>
+      )}
+
       {selectedContact ? (
         <>
-          <MessagesList 
-            messages={messages} 
-            isLoading={loading} 
-            messagesEndRef={messagesEndRef} 
-          />
-          
-          {/* Message input */}
+          <MessagesList messages={messages} isLoading={loading} messagesEndRef={messagesEndRef} />
+
           <form onSubmit={handleSendMessage} className="p-2 border-t flex">
             <Input
               type="text"
@@ -292,7 +258,7 @@ const fetchContacts = async () => {
         </>
       ) : (
         <div className="flex-1 flex items-center justify-center text-gray-500">
-          {contacts.length === 0 ? "Aucun contact" : "Sélectionnez un contact"}
+          {contacts.length === 0 ? 'Aucun contact' : 'Sélectionnez un contact'}
         </div>
       )}
     </div>

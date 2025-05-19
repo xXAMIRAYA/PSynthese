@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface UserStatsProps {
-  role: 'donateur' | 'campaign-manager' | string | null;
+  role: 'donator' | 'campaign_manager' | string | null;
   totalDonated: number;
   donationsCount: number;
   campaignsCount: number;
@@ -47,7 +47,7 @@ const UserStats = ({
 
       {role === 'campaign_manager' && (
         <>
-           <Card>
+          <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Total des dons effectués</CardTitle>
             </CardHeader>

@@ -29,6 +29,8 @@ const UserDashboard = () => {
         if (profile?.role === 'campaign_manager') {
           const campaigns = await getUserCampaigns(user.id);
           setUserCampaigns(campaigns);
+          const stats = await getDonationStats(user.id);
+          setDonationStats(stats);
         }
         if (profile?.role === 'donator') {
           const donations = await fetchUserDonations(user.id);
@@ -95,7 +97,7 @@ const UserDashboard = () => {
  />
         <UserStats
           role={profile?.role ?? null}
-          totalDonated={donationStats.totalAmount}
+           totalDonated={donationStats.totalAmount}
           donationsCount={donationStats.count}
           campaignsCount={userCampaigns.length}
           createdAt={profile?.created_at}

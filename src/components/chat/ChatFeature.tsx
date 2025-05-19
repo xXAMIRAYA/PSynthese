@@ -108,7 +108,9 @@ import { useAuth } from '@/contexts/AuthContext';
 const ChatFeature: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { user } = useAuth();
+  const [users, setUsers] = useState([]); // utilisateurs disponibles pour discuter
+
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -124,7 +126,7 @@ const ChatFeature: React.FC = () => {
         if (error) throw error;
         if (count !== null) setUnreadCount(count);
       } catch (error) {
-        console.error("Error fetching unread messages:", error);
+        console.error("Erreur lors de la récupération des messages non lus:", error);
       }
     };
 
@@ -142,7 +144,7 @@ const ChatFeature: React.FC = () => {
         },
         (payload) => {
           const newMessage = payload.new as any;
-          if (!newMessage.read) {
+          if (!newMessage.is_read) {
             setUnreadCount((prev) => prev + 1);
             if (!isChatOpen) {
               toast.info("Nouveau message reçu", {
@@ -158,6 +160,30 @@ const ChatFeature: React.FC = () => {
       supabase.removeChannel(subscription);
     };
   }, [user?.id, isChatOpen]);
+
+  // 🔄 Charger les utilisateurs opposés au rôle connecté
+  useEffect(() => {
+    const fetchUsersToChatWith = async () => {
+      if (!profile?.role) return;
+
+      const oppositeRole = profile.role === 'responsable' ? 'donator' : 'responsable';
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .eq('role', oppositeRole);
+
+      if (error) {
+        console.error("Erreur de chargement des utilisateurs :", error);
+      } else {
+        setUsers(data);
+      }
+    };
+
+    if (isChatOpen) {
+      fetchUsersToChatWith();
+    }
+  }, [isChatOpen, profile?.role]);
 
   const handleOpenChat = () => {
     if (!user) {
@@ -178,7 +204,7 @@ const ChatFeature: React.FC = () => {
           .eq('read', false);
         setUnreadCount(0);
       } catch (error) {
-        console.error("Error marking messages as read:", error);
+        console.error("Erreur lors de la mise à jour des messages:", error);
       }
     }
   };
