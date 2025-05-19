@@ -26,11 +26,13 @@ const UserDashboard = () => {
 
       setIsLoading(true);
       try {
-        if (profile?.role === 'campaign-manager') {
+        if (profile?.role === 'campaign_manager') {
           const campaigns = await getUserCampaigns(user.id);
           setUserCampaigns(campaigns);
+          const stats = await getDonationStats(user.id);
+          setDonationStats(stats);
         }
-        if (profile?.role === 'donateur') {
+        if (profile?.role === 'donator') {
           const donations = await fetchUserDonations(user.id);
           setUserDonations(donations);
           const stats = await getDonationStats(user.id);
@@ -42,6 +44,7 @@ const UserDashboard = () => {
         setIsLoading(false);
       }
     };
+  
 
     loadUserData();
   }, [user, profile?.role]);
@@ -94,7 +97,7 @@ const UserDashboard = () => {
  />
         <UserStats
           role={profile?.role ?? null}
-          totalDonated={donationStats.totalAmount}
+           totalDonated={donationStats.totalAmount}
           donationsCount={donationStats.count}
           campaignsCount={userCampaigns.length}
           createdAt={profile?.created_at}
