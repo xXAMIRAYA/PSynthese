@@ -17,7 +17,9 @@ interface DonateFormProps {
 const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
   const [donationKind, setDonationKind] = useState<'argent' | 'materiel'>('argent');
   const [amount, setAmount] = useState<number>(50);
+  const [materialName, setMaterialName] = useState('');
   const [message, setMessage] = useState<string>('');
+  const [images, setImages] = useState<FileList | null>(null);
   const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { user } = useAuth();
@@ -37,33 +39,58 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
       return;
     }
 
-    if (donationKind === 'argent' && (!amount || amount <= 0)) {
-      toast({
-        title: "Montant invalide",
-        description: "Veuillez entrer un montant valide",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (donationKind === 'argent') {
+      if (!amount || amount <= 0) {
+        toast({
+          title: "Montant invalide",
+          description: "Veuillez entrer un montant valide",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      if (!materialName.trim()) {
+        toast({
+          title: "Nom du matériel manquant",
+          description: "Veuillez renseigner le nom du matériel",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (donationKind === 'materiel' && message.trim().length < 5) {
-      toast({
-        title: "Description trop courte",
-        description: "Veuillez fournir une description du don matériel",
-        variant: "destructive",
-      });
-      return;
+      if (!images || images.length === 0) {
+        toast({
+          title: "Aucune photo sélectionnée",
+          description: "Veuillez ajouter au moins une photo du matériel",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
     try {
-      await makeDonation(campaignId, user.id, {
-        kind: donationKind,
-        amount: donationKind === 'argent' ? amount : undefined,
-        message: message.trim() || undefined,
-        anonymous: isAnonymous,
-      });
+      const formData = new FormData();
+      formData.append('kind', donationKind);
+      formData.append('anonymous', String(isAnonymous));
+      formData.append('campaignId', campaignId);
+      formData.append('userId', user.id);
+
+      if (donationKind === 'argent') {
+        formData.append('amount', String(amount));
+        if (message.trim()) formData.append('message', message.trim());
+      } else {
+        formData.append('materialName', materialName.trim());
+        if (message.trim()) formData.append('message', message.trim());
+        if (images) {
+          Array.from(images).forEach((image) => {
+            formData.append('images', image);
+          });
+        }
+      }
+
+      await makeDonation(formData); // Il faut que `makeDonation` accepte un FormData côté backend
 
       toast({
         title: "Merci pour votre don!",
@@ -89,7 +116,7 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
   return (
     <div className="mt-4 border-t pt-4">
       <h3 className="font-medium mb-4">Faire un don</h3>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
 
         {/* Type de don */}
         <div>
@@ -112,7 +139,7 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
           </div>
         </div>
 
-        {/* Champ montant ou description selon le type */}
+        {/* Champs conditionnels */}
         {donationKind === 'argent' ? (
           <div>
             <Label>Choisissez un montant (€)</Label>
@@ -141,19 +168,47 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
             </div>
           </div>
         ) : (
-          <div>
-            <Label htmlFor="message">Description du don matériel</Label>
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ex: Matériel médical, vêtements, nourriture..."
-              className="resize-none"
-            />
-          </div>
+          <>
+            <div>
+              <Label htmlFor="materialName">Nom du matériel</Label>
+              <Input
+                id="materialName"
+                value={materialName}
+                onChange={(e) => setMaterialName(e.target.value)}
+                placeholder="Ex: Tentes, médicaments, couvertures..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="images">Photo(s) du matériel</Label>
+              <Input
+                id="images"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setImages(e.target.files)}
+              />
+            </div>
+          </>
         )}
 
-        {/* Don anonyme */}
+        {/* Message */}
+        <div>
+          <Label htmlFor="message">Message (optionnel)</Label>
+          <Textarea
+            id="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={
+              donationKind === 'argent'
+                ? "Votre message de soutien"
+                : "Informations complémentaires sur le matériel"
+            }
+            className="resize-none"
+          />
+        </div>
+
+        {/* Anonyme */}
         <div className="flex items-center space-x-2">
           <Switch
             id="anonymous"
