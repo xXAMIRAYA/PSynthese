@@ -11,7 +11,6 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const LoginForm: React.FC = () => {
@@ -21,10 +20,35 @@ const LoginForm: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState(false);
 
-  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || '/dashboard';
+
+  // Fonction login modifiée pour retourner l'utilisateur avec son role
+  const login = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      console.error('Erreur login:', error.message);
+      return null;
+    }
+
+    if (!data.user) return null;
+
+    // Récupérer le rôle dans ta table profils (adapter le nom de la table et le champ role)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles') // adapter ici
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Erreur récupération rôle:', profileError.message);
+      return null;
+    }
+
+    return { ...data.user, role: profile.role };
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +56,14 @@ const LoginForm: React.FC = () => {
     setMessage(null);
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        navigate(from);
+      const user = await login(email, password);
+
+      if (user) {
+        if (user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate(from);
+        }
       } else {
         setMessage("Email ou mot de passe incorrect.");
       }
@@ -56,7 +85,7 @@ const LoginForm: React.FC = () => {
     setMessage(null);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "http://localhost:3000/reset-password", // Change cette URL selon ton projet
+      redirectTo: "http://localhost:3000/reset-password",
     });
 
     if (error) {
