@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { makeDonation } from '@/services/donationService';
 
+
+
 interface DonateFormProps {
   campaignId: string;
   onSuccess: () => void;
