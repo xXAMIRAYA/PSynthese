@@ -19,6 +19,7 @@ import DashboardPage from "./pages/DashboardPage";
 import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 import CreateCampaignPage from "./pages/CreateCampaignPage";
+import ResetPassword from "./components/auth/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,8 @@ const App = () => (
             <Route path="/campaign/:id" element={<Layout><CampaignDetailPage /></Layout>} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+           <Route path="/reset-password" element={<ResetPassword />} />
+
             
             {/* Protected routes */}
             <Route 
