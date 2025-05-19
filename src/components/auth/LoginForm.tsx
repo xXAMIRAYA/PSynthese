@@ -24,27 +24,31 @@ const LoginForm: React.FC = () => {
   const location = useLocation();
   const from = location.state?.from || '/dashboard';
 
-  // Fonction login modifiée pour retourner l'utilisateur avec son role
+  // Login avec récupération du rôle
   const login = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       console.error('Erreur login:', error.message);
-      return null;
+      throw new Error(error.message);
     }
 
-    if (!data.user) return null;
+    if (!data.user) {
+      throw new Error("Utilisateur non trouvé après connexion");
+    }
 
-    // Récupérer le rôle dans ta table profils (adapter le nom de la table et le champ role)
+    // Petit délai pour s'assurer que l'utilisateur est bien à jour (optionnel)
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
     const { data: profile, error: profileError } = await supabase
-      .from('profiles') // adapter ici
+      .from('profiles')
       .select('role')
       .eq('id', data.user.id)
       .single();
 
     if (profileError) {
       console.error('Erreur récupération rôle:', profileError.message);
-      return null;
+      throw new Error(profileError.message);
     }
 
     return { ...data.user, role: profile.role };
@@ -57,19 +61,19 @@ const LoginForm: React.FC = () => {
 
     try {
       const user = await login(email, password);
+      console.log("User connecté:", user);
 
-      if (user) {
+      if (user && user.role) {
         if (user.role === 'admin') {
           navigate('/admin');
         } else {
           navigate(from);
         }
       } else {
-        setMessage("Email ou mot de passe incorrect.");
+        setMessage("Rôle utilisateur introuvable.");
       }
     } catch (error: any) {
-      setMessage("Erreur lors de la connexion.");
-      console.error('Login error:', error);
+      setMessage(error.message || "Erreur lors de la connexion.");
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +120,7 @@ const LoginForm: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="username"
             />
           </div>
           <div className="space-y-2">
@@ -126,6 +131,7 @@ const LoginForm: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
 
