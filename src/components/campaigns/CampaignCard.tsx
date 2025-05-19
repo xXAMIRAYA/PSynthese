@@ -29,12 +29,17 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
   const currentDate = new Date();
   const campaignEndDate = new Date(campaign.end_date);
 
-  // Si la date de fin est dépassée, ne pas afficher la carte
-  if (campaignEndDate < currentDate) {
+  const isExpired = campaignEndDate < currentDate;
+  const isBudgetReached = campaign.raised >= campaign.target;
+
+  if (isExpired || isBudgetReached) {
     return null;
   }
 
-  const progressPercentage = Math.min(Math.round((campaign.raised / campaign.target) * 100), 100);
+  const progressPercentage = Math.min(
+    Math.round((campaign.raised / campaign.target) * 100),
+    100
+  );
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("fr-FR", {
@@ -77,7 +82,9 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
           className="h-48 w-full object-cover"
         />
         <div className="absolute top-2 right-2 flex gap-2">
-          <Badge variant={campaign.status === "urgent" ? "destructive" : "default"}>
+          <Badge
+            variant={campaign.status === "urgent" ? "destructive" : "default"}
+          >
             {campaign.status === "urgent"
               ? "Urgent"
               : campaign.status === "completed"
@@ -94,7 +101,9 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
           </Badge>
         </div>
 
-        <h3 className="font-bold text-lg mb-2 line-clamp-2">{campaign.title}</h3>
+        <h3 className="font-bold text-lg mb-2 line-clamp-2">
+          {campaign.title}
+        </h3>
 
         <div className="flex items-center text-sm text-muted-foreground mb-1">
           <MapPin className="h-3.5 w-3.5 mr-1" />
@@ -123,7 +132,10 @@ const CampaignCard = ({ campaign }: CampaignCardProps) => {
       </CardContent>
 
       <CardFooter className="pt-0">
-        <Button onClick={() => navigate(`/campaign/${campaign.id}`)} className="w-full">
+        <Button
+          onClick={() => navigate(`/campaign/${campaign.id}`)}
+          className="w-full"
+        >
           Voir la campagne
         </Button>
       </CardFooter>
