@@ -260,10 +260,10 @@ const RegisterPage = () => {
                 setRole(value);
                 setShowAdminCodeError(false);
               }}>
-                <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="donator">Donateur</TabsTrigger>
                   <TabsTrigger value="campaign_manager">Responsable</TabsTrigger>
-                  <TabsTrigger value="admin">Admin</TabsTrigger>
+                  {/* <TabsTrigger value="admin">Admin</TabsTrigger> */}
                 </TabsList>
 
                 <TabsContent value="donator">
