@@ -13,7 +13,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AboutPage from "./pages/AboutPage";
 import CampaignsPage from "./pages/CampaignsPage";
 import CampaignDetailPage from "./pages/CampaignDetailPage";
-import EditCampaign from "./components/Edit/EditCampaign";
+// import EditCampaign from "./components/Edit/EditCampaign";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -40,7 +40,7 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
            <Route path="/reset-password" element={<ResetPassword />} />
-           <Route path="/admin/campaigns/:id/edit" element={<EditCampaign />} />
+           {/* <Route path="/admin/campaigns/:id/edit" element={<EditCampaign />} /> */}
 
             
             {/* Protected routes */}
