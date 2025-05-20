@@ -226,9 +226,9 @@ const CampaignDetail = () => {
         </div>
 
         <Tabs defaultValue="description">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="description">Description</TabsTrigger>
-            <TabsTrigger value="updates">Mises à jour {campaign.updates?.length ? `(${campaign.updates.length})` : ''}</TabsTrigger>
+            {/* <TabsTrigger value="updates">Mises à jour {campaign.updates?.length ? `(${campaign.updates.length})` : ''}</TabsTrigger> */}
             <TabsTrigger value="donors">Donateurs</TabsTrigger>
           </TabsList>
           <TabsContent value="description" className="mt-6">
