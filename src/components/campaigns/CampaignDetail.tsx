@@ -76,8 +76,9 @@ const CampaignDetail = () => {
   const progressPercentage = Math.min(Math.round((campaign.raised / campaign.target) * 100), 100);
   
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
-  };
+  return new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD' }).format(amount);
+};
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
