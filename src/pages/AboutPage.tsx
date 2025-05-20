@@ -160,9 +160,9 @@ const AboutPage = () => {
                 />
               </div>
               <h3 className="text-xl font-medium">Elouassif IKRAM</h3>
-              <p className="text-primary mb-2">Directeur Technique</p>
+              <p className="text-primary mb-2"> Directrice des Partenariats</p>
               <p className="text-muted-foreground text-sm">
-                Expert en technologie avec 15 ans d'expérience dans le développement de plateformes sociales.
+                Spécialiste des relations avec les organisations de santé et les institutions médicales.
               </p>
             </div>
             <div className="bg-background p-6 rounded-lg border text-center">
@@ -174,9 +174,9 @@ const AboutPage = () => {
                 />
               </div>
               <h3 className="text-xl font-medium">Batta AMAR</h3>
-              <p className="text-primary mb-2">Directrice des Partenariats</p>
+              <p className="text-primary mb-2">Directeur Technique</p>
               <p className="text-muted-foreground text-sm">
-                Spécialiste des relations avec les organisations de santé et les institutions médicales.
+                Expert en technologie avec 15 ans d'expérience dans le développement de plateformes sociales.
               </p>
             </div>
           </div>
