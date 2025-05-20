@@ -138,54 +138,144 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+material_donations: {
+  Row: {
+    id: string
+    donor_id: string
+    item_name: string
+    quantity: number
+    status: 'pending' | 'validated' | 'rejected'
+    admin_comment: string | null
+    created_at: string | null
+  }
+  
+  Insert: {
+    id?: string
+    donor_id: string
+    item_name: string
+    quantity: number
+    status?: 'pending' | 'validated' | 'rejected'
+    admin_comment?: string | null
+    created_at?: string | null
+  }
+  Update: {
+    id?: string
+    donor_id?: string
+    item_name?: string
+    quantity?: number
+    status?: 'pending' | 'validated' | 'rejected'
+    admin_comment?: string | null
+    created_at?: string | null
+  }
+  Relationships: [
+    {
+      foreignKeyName: "material_donations_donor_id_fkey"
+      columns: ["donor_id"]
+      isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+  ]
+}
 
       }
+      // donations: {
+      //   Row: {
+      //     amount: string
+      //     anonymous: boolean | null
+      //     campaign_id: string
+      //     created_at: string | null
+      //     id: string
+      //     message: string | null
+      //     user_id: string
+      //   }
+      //   Insert: {
+      //     amount: number
+      //     anonymous?: boolean | null
+      //     campaign_id: string
+      //     created_at?: string | null
+      //     id?: string
+      //     message?: string | null
+      //     user_id: string
+      //   }
+      //   Update: {
+      //     amount?: number
+      //     anonymous?: boolean | null
+      //     campaign_id?: string
+      //     created_at?: string | null
+      //     id?: string
+      //     message?: string | null
+      //     user_id?: string
+      //   }
+      //   Relationships: [
+      //     {
+      //       foreignKeyName: "donations_campaign_id_fkey"
+      //       columns: ["campaign_id"]
+      //       isOneToOne: false
+      //       referencedRelation: "campaigns"
+      //       referencedColumns: ["id"]
+      //     },
+      //     {
+      //       foreignKeyName: "donations_user_id_fkey"
+      //       columns: ["user_id"]
+      //       isOneToOne: false
+      //       referencedRelation: "profiles"
+      //       referencedColumns: ["id"]
+      //     },
+      //   ]
+      // }
       donations: {
-        Row: {
-          amount: string
-          anonymous: boolean | null
-          campaign_id: string
-          created_at: string | null
-          id: string
-          message: string | null
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          anonymous?: boolean | null
-          campaign_id: string
-          created_at?: string | null
-          id?: string
-          message?: string | null
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          anonymous?: boolean | null
-          campaign_id?: string
-          created_at?: string | null
-          id?: string
-          message?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "donations_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "donations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      
+  Row: {
+    amount: string
+    anonymous: boolean | null
+    campaign_id: string
+    created_at: string | null
+    id: string
+    message: string | null
+    user_id: string
+    status: 'pending' | 'validated' | 'rejected' // <--- à ajouter
+    admin_comment: string | null // <--- à ajouter
+  }
+  Insert: {
+    amount: number
+    anonymous?: boolean | null
+    campaign_id: string
+    created_at?: string | null
+    id?: string
+    message?: string | null
+    user_id: string
+    status?: 'pending' | 'validated' | 'rejected'
+    admin_comment?: string | null
+  }
+  Update: {
+    amount?: number
+    anonymous?: boolean | null
+    campaign_id?: string
+    created_at?: string | null
+    id?: string
+    message?: string | null
+    user_id?: string
+    status?: 'pending' | 'validated' | 'rejected'
+    admin_comment?: string | null
+  }
+  Relationships: [
+    {
+      foreignKeyName: "donations_campaign_id_fkey"
+      columns: ["campaign_id"]
+      isOneToOne: false
+      referencedRelation: "campaigns"
+      referencedColumns: ["id"]
+    },
+    {
+      foreignKeyName: "donations_user_id_fkey"
+      columns: ["user_id"]
+      isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },
+  ]
+}
+
       profiles: {
         Row: {
           avatar_url: string | null
