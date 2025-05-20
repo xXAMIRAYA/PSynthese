@@ -144,17 +144,17 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
         {/* Champs conditionnels */}
         {donationKind === 'argent' ? (
           <div>
-            <Label>Choisissez un montant (€)</Label>
-            <div className="grid grid-cols-5 gap-2 my-2">
+            <Label>Choisissez un montant (DH)</Label>
+            <div className="flex flex-wrap gap-2 my-2">
               {predefinedAmounts.map((predefinedAmount) => (
                 <Button
                   key={predefinedAmount}
                   type="button"
                   variant={amount === predefinedAmount ? "default" : "outline"}
-                  className="h-10"
+                  className="h-10 min-w-[70px] flex-1 text-sm"
                   onClick={() => setAmount(predefinedAmount)}
                 >
-                  {predefinedAmount}€
+                  {predefinedAmount}DH
                 </Button>
               ))}
             </div>
