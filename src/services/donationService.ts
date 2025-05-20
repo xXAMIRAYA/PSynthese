@@ -1,9 +1,18 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type DonationFormData = {
-  amount: number;
+  type: 'money' | 'material' | 'volunteering';
+  amount?: number;
   message?: string;
   anonymous: boolean;
+
+  // Pour don matériel
+  description?: string;
+  quantity?: number;
+
+  // Pour bénévolat
+  skills?: string;
+  availability?: string;
 };
 
 export const makeDonation = async (
@@ -12,21 +21,35 @@ export const makeDonation = async (
   donationData: DonationFormData
 ) => {
   try {
+    const baseData: any = {
+      campaign_id: campaignId,
+      user_id: userId,
+      type: donationData.type,
+      message: donationData.message || null,
+      anonymous: donationData.anonymous,
+    };
+
+    if (donationData.type === 'money') {
+      baseData.amount = donationData.amount;
+    }
+
+    if (donationData.type === 'material') {
+      baseData.description = donationData.description;
+      baseData.quantity = donationData.quantity;
+    }
+
+    if (donationData.type === 'volunteering') {
+      baseData.skills = donationData.skills;
+      baseData.availability = donationData.availability;
+    }
+
     const { data, error } = await supabase
       .from('donations')
-      .insert({
-        campaign_id: campaignId,
-        user_id: userId,
-        amount: donationData.amount,
-        message: donationData.message || null,
-        anonymous: donationData.anonymous
-      })
+      .insert(baseData)
       .select()
       .single();
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     return data;
   } catch (error) {
@@ -34,6 +57,7 @@ export const makeDonation = async (
     throw error;
   }
 };
+
 
 export const fetchDonationsByCampaign = async (campaignId: string) => {
   try {

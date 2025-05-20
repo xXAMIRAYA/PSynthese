@@ -19,6 +19,7 @@ import {
   Menu, 
   X
 } from 'lucide-react';
+import ChatFeature from '../chat/ChatFeature';
 
 const Navbar = () => {
   const { user, profile, logout, isAdmin } = useAuth();
@@ -41,6 +42,7 @@ const Navbar = () => {
   };
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
@@ -79,13 +81,13 @@ const Navbar = () => {
         
         <div className="hidden md:flex items-center gap-4">
           {user ? (
-            <>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
+            <>            
+              {/* <Button variant="ghost" size="icon" className="relative"> */}
+                {/* <Bell className="h-5 w-5" />
                 <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-xs text-white flex items-center justify-center">
                   2
-                </span>
-              </Button>
+                </span> */}                
+              {/* </Button> */}
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -239,6 +241,10 @@ const Navbar = () => {
         </div>
       )}
     </header>
+     <div className="fixed bottom-4 right-4 z-[1000]">
+        <ChatFeature />
+      </div>
+    </>
   );
 };
 

@@ -19,34 +19,36 @@ const UserDashboard = () => {
   const [donationStats, setDonationStats] = useState({ count: 0, totalAmount: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const { formatCurrency, formatDate } = useFormattingUtils();
-  
+
   useEffect(() => {
     const loadUserData = async () => {
       if (!user) return;
-      
+
       setIsLoading(true);
       try {
-        // Fetch user campaigns
-        const campaigns = await getUserCampaigns(user.id);
-        setUserCampaigns(campaigns);
-        
-        // Fetch user donations
-        const donations = await fetchUserDonations(user.id);
-        setUserDonations(donations);
-        
-        // Get donation stats
-        const stats = await getDonationStats(user.id);
-        setDonationStats(stats);
+        if (profile?.role === 'campaign_manager') {
+          const campaigns = await getUserCampaigns(user.id);
+          setUserCampaigns(campaigns);
+          const stats = await getDonationStats(user.id);
+          setDonationStats(stats);
+        }
+        if (profile?.role === 'donator') {
+          const donations = await fetchUserDonations(user.id);
+          setUserDonations(donations);
+          const stats = await getDonationStats(user.id);
+          setDonationStats(stats);
+        }
       } catch (error) {
         console.error('Error loading user data:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    
-    loadUserData();
-  }, [user]);
   
+
+    loadUserData();
+  }, [user, profile?.role]);
+
   if (isLoading) {
     return (
       <div className="text-center py-12">
@@ -55,46 +57,72 @@ const UserDashboard = () => {
       </div>
     );
   }
-  
-  return (
-    <div className="space-y-8">
-      <UserHeader 
-        name={profile?.name} 
-        email={profile?.email} 
-      />
-      
-      <UserStats 
-        totalDonated={donationStats.totalAmount}
-        donationsCount={donationStats.count}
-        campaignsCount={userCampaigns.length}
-        createdAt={profile?.created_at}
-        formatCurrency={formatCurrency}
-        formatDate={formatDate}
-      />
-      
-      <Tabs defaultValue="campaigns">
-        <TabsList>
-          <TabsTrigger value="campaigns">Mes Campagnes</TabsTrigger>
-          <TabsTrigger value="donations">Mes Dons</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="campaigns" className="mt-6">
-          <UserCampaignsTable 
-            campaigns={userCampaigns}
-            formatCurrency={formatCurrency}
-          />
-        </TabsContent>
-        
-        <TabsContent value="donations" className="mt-6">
-          <UserDonationsTable 
-            donations={userDonations}
-            formatCurrency={formatCurrency}
-            formatDate={formatDate}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+
+  // Affichage selon le rôle
+  if (profile?.role === 'donator') {
+    return (
+      <div className="space-y-8">
+        <UserHeader name={profile?.name} email={profile?.email} 
+          role={profile?.role || null} 
+/>
+        <UserStats
+          role={profile?.role ?? null}
+          totalDonated={donationStats.totalAmount}
+          donationsCount={donationStats.count}
+          campaignsCount={userCampaigns.length}
+          createdAt={profile?.created_at}
+          formatCurrency={formatCurrency}
+          formatDate={formatDate}
+        />
+
+        <Tabs defaultValue="donations">
+          <TabsList>
+            <TabsTrigger value="donations">Mes Dons</TabsTrigger>
+          </TabsList>
+          <TabsContent value="donations" className="mt-6">
+            <UserDonationsTable
+              donations={userDonations}
+              formatCurrency={formatCurrency}
+              formatDate={formatDate}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  } else if (profile?.role === 'campaign_manager') {
+    return (
+      <div className="space-y-8">
+        <UserHeader name={profile?.name} email={profile?.email}
+          role={profile?.role || null} 
+ />
+        <UserStats
+          role={profile?.role ?? null}
+           totalDonated={donationStats.totalAmount}
+          donationsCount={donationStats.count}
+          campaignsCount={userCampaigns.length}
+          createdAt={profile?.created_at}
+          formatCurrency={formatCurrency}
+          formatDate={formatDate}
+        />
+
+        <Tabs defaultValue="campaigns">
+          <TabsList>
+            <TabsTrigger value="campaigns">Mes Campagnes</TabsTrigger>
+          </TabsList>
+          <TabsContent value="campaigns" className="mt-6">
+            <UserCampaignsTable
+              campaigns={userCampaigns}
+              formatCurrency={formatCurrency}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  } else {
+    // Cas si rôle inconnu ou non connecté
+    return <p>Rôle utilisateur inconnu ou non connecté.</p>;
+  }
 };
+
 
 export default UserDashboard;

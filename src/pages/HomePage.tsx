@@ -1,33 +1,48 @@
-
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { Heart, ChevronRight, Target, Award, Users } from 'lucide-react';
-import { campaigns as mockCampaigns } from '@/services/mockData';
+import { ChevronRight, ArrowRight, Target, Heart, CheckCircle } from 'lucide-react';
 import CampaignCard from '@/components/campaigns/CampaignCard';
+import { useState, useEffect } from 'react';
+import { Input } from '@/components/ui/input';
+import { fetchCampaigns } from '@/services/campaignService';
+import { Button } from '@/components/ui/button';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Campaign } from '@/types';
 
 const HomePage = () => {
   const navigate = useNavigate();
-  
-  // Adapter les campaigns mock data pour qu'ils soient conformes au type attendu par CampaignCard
-  const featuredCampaigns = mockCampaigns.slice(0, 3).map(campaign => ({
-    id: campaign.id,
-    title: campaign.title,
-    description: campaign.description,
-    category: campaign.category as 'emergency' | 'research' | 'equipment' | 'care' | 'awareness',
-    location: campaign.location,
-    organizer: {
-      name: typeof campaign.organizer === 'string' ? campaign.organizer : campaign.organizer,
-      avatar_url: typeof campaign.organizer === 'string' ? undefined : campaign.organizer
-    },
-    target: campaign.target,
-    raised: campaign.raised,
-    donors_count: campaign.donorsCount || campaign.donors_count || 0,
-    image_url: campaign.imageUrl || campaign.image_url || '',
-    end_date: campaign.endDate || campaign.end_date || '',
-    created_at: campaign.createdAt || campaign.created_at || '',
-    status: campaign.status as 'active' | 'completed' | 'urgent'
-  }));
+  const { user } = useAuth();
+
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [filteredCampaigns, setFilteredCampaigns] = useState<Campaign[]>([]);
+  const [search, setSearch] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      try {
+        const data: Campaign[] = await fetchCampaigns();
+        const mapped = data.map((c) => ({
+          ...c,
+          image_url: c.image_url ?? '',
+        }));
+        setCampaigns(mapped);
+        setFilteredCampaigns(mapped);
+      } catch (error) {
+        console.error('Erreur lors du chargement des campagnes :', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCampaigns();
+  }, []);
+
+  useEffect(() => {
+    const results = campaigns.filter((campaign) =>
+      campaign.title.toLowerCase().includes(search.toLowerCase())
+    );
+    setFilteredCampaigns(results);
+  }, [search, campaigns]);
 
   return (
     <div>
@@ -42,7 +57,7 @@ const HomePage = () => {
             Transformez votre générosité en <span className="text-primary">impact médical concret</span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 animate-fade-in">
-           MainSolidaire  met en relation les donateurs et les structures médicales pour transformer l'expérience du don dans le domaine de la santé.
+            MainSolidaire met en relation les donateurs et les structures médicales pour transformer l'expérience du don dans le domaine de la santé.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 mb-12 animate-fade-in">
             <Button size="lg" onClick={() => navigate('/campaigns')}>
@@ -54,27 +69,53 @@ const HomePage = () => {
             </Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full max-w-3xl">
-            <div className="flex flex-col items-center">
-              <div className="text-2xl md:text-3xl font-bold text-primary">5+</div>
-              <div className="text-sm text-muted-foreground">Campagnes actives</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-2xl md:text-3xl font-bold text-primary">200K+</div>
-              <div className="text-sm text-muted-foreground">Fonds collectés</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-2xl md:text-3xl font-bold text-primary">1000+</div>
-              <div className="text-sm text-muted-foreground">Donateurs</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="text-2xl md:text-3xl font-bold text-primary">100%</div>
-              <div className="text-sm text-muted-foreground">Transparence</div>
-            </div>
+            {[
+              { value: '5+', label: 'Campagnes actives' },
+              { value: '200K+', label: 'Fonds collectés' },
+              { value: '1000+', label: 'Donateurs' },
+              { value: '100%', label: 'Transparence' },
+            ].map((item, idx) => (
+              <div key={idx} className="flex flex-col items-center">
+                <div className="text-2xl md:text-3xl font-bold text-primary">{item.value}</div>
+                <div className="text-sm text-muted-foreground">{item.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Campaigns */}
+      {/* Urgent Campaigns Section */}
+      <section className="py-10 bg-red-50">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+              <div className="mr-3 p-2 bg-red-100 rounded-full">
+                <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              Campagnes Urgentes
+            </h2>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/campaigns?tab=emergency" className="flex items-center">
+                Voir toutes
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCampaigns
+              .filter((campaign) => campaign.category?.toLowerCase() === "emergency")
+              .slice(0, 3)
+              .map((campaign) => (
+                <CampaignCard key={campaign.id} campaign={campaign} />
+              ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Campaigns Section */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-10">
@@ -82,24 +123,37 @@ const HomePage = () => {
               <h2 className="text-3xl font-bold mb-2">Campagnes à la une</h2>
               <p className="text-muted-foreground">Découvrez les initiatives qui ont besoin de votre soutien.</p>
             </div>
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/campaigns')}
-              className="mt-4 md:mt-0"
-            >
+            <Button variant="ghost" onClick={() => navigate('/campaigns')} className="mt-4 md:mt-0">
               Voir toutes les campagnes
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredCampaigns.map(campaign => (
-              <CampaignCard key={campaign.id} campaign={campaign} />
-            ))}
+
+          <div className="mb-8 max-w-md">
+            <Input placeholder="Rechercher une campagne..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
+
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+              <p>Chargement des campagnes...</p>
+            </div>
+          ) : filteredCampaigns.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-lg font-medium">Aucune campagne trouvée</h3>
+              <p className="text-muted-foreground">Essayez de modifier vos critères de recherche</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCampaigns.slice(0, 3).map((campaign) => (
+                <CampaignCard key={campaign.id} campaign={campaign} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* How It Works Section */}
       <section className="py-16 bg-accent/50">
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center mb-12">
@@ -129,82 +183,13 @@ const HomePage = () => {
             </div>
             <div className="flex flex-col items-center text-center">
               <div className="h-16 w-16 rounded-full bg-medical-100 flex items-center justify-center mb-4">
-                <Award className="h-8 w-8 text-primary" />
+                <CheckCircle className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-xl font-medium mb-2">3. Suivez l'impact</h3>
+              <h3 className="text-xl font-medium mb-2">3. Suivez l’impact</h3>
               <p className="text-muted-foreground">
-                Visualisez l'évolution de la campagne et recevez des mises à jour sur l'utilisation des fonds.
+                Recevez des mises à jour sur la façon dont vos dons aident les personnes dans le besoin.
               </p>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-2">Témoignages</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Ce que disent nos utilisateurs à propos de Health Solidarity Hub.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-card border rounded-lg p-6">
-              <p className="italic mb-4">
-                "Grâce à MainSolidaire, j'ai pu suivre l'impact concret de mes dons pour l'hôpital de ma ville. La transparence et les mises à jour régulières m'ont vraiment rassuré."
-              </p>
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-medical-100 flex items-center justify-center mr-3">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <div className="font-medium">Dr Salah Edinne Alami</div>
-                  <div className="text-sm text-muted-foreground">Donateur régulier</div>
-                </div>
-              </div>
-            </div>
-            <div className="bg-card border rounded-lg p-6">
-              <p className="italic mb-4">
-                "En tant que responsable d'un projet de recherche, cette plateforme nous a permis de collecter les fonds nécessaires tout en maintenant un lien de confiance avec nos donateurs."
-              </p>
-              <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-medical-100 flex items-center justify-center mr-3">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <div className="font-medium">Amir Elamrani</div>
-                  <div className="text-sm text-muted-foreground">Chercheuse en oncologie</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-16 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4 md:px-6 text-center">
-          <h2 className="text-3xl font-bold mb-6">Prêt à faire la différence?</h2>
-          <p className="text-lg mb-8 max-w-2xl mx-auto opacity-90">
-            Rejoignez notre communauté et contribuez à améliorer l'accès aux soins de santé pour ceux qui en ont besoin.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              variant="secondary"
-              onClick={() => navigate('/campaigns')}
-            >
-              Explorer les campagnes
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="bg-transparent border-primary-foreground hover:bg-primary-foreground/10"
-              onClick={() => navigate('/register')}
-            >
-              Créer un compte
-            </Button>
           </div>
         </div>
       </section>

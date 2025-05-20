@@ -46,9 +46,6 @@ const AboutPage = () => {
   alt="Notre équipe"
   className="w-[800px] h-[630px] object-cover"
 />
-
-
-
             </div>
           </div>
         </div>
