@@ -1,4 +1,4 @@
- import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -420,9 +420,9 @@ const AdminDashboard = () => {
                         </td>
                         <td className="p-4 align-middle">
                           <div className="flex gap-2">
-                            {/* <Button variant="ghost" size="icon" onClick={() => navigate(`/admin/campaigns/${campaign.id}/edit`)}>
+                            <Button variant="ghost" size="icon" onClick={() => navigate(/admin/campaigns/${campaign.id}/edit)}>
                               <Edit className="h-4 w-4" />
-                            </Button> */}
+                            </Button>
                             <Button 
                               variant="ghost" 
                               size="icon" 
@@ -487,7 +487,7 @@ const AdminDashboard = () => {
                           </td>
                           <td className="p-4 align-middle">
                             {campaign ? 
-                              `${campaign.title.substring(0, 30)}${campaign.title.length > 30 ? '...' : ''}` : 
+                              ${campaign.title.substring(0, 30)}${campaign.title.length > 30 ? '...' : ''} : 
                               "Campagne inconnue"
                             }
                           </td>
@@ -569,7 +569,7 @@ const AdminDashboard = () => {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              onClick={() => navigate(`/admin/users/${user.id}/edit`)}
+                              onClick={() => navigate(/admin/users/${user.id}/edit)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
