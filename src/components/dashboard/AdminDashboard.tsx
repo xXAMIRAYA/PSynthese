@@ -556,7 +556,7 @@ const AdminDashboard = () => {
                               )}
                             </div>
                             <span>{donation.user?.name || "Anonyme"}</span>
-                          </div>
+                          </div> 
                         </td>
                         <td className="p-4 align-middle font-medium">
                           {parseFloat(donation.amount).toFixed(2)} €
