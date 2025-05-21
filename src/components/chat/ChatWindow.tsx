@@ -246,26 +246,40 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ onClose }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !user || !selectedContact) return;
+const handleSendMessage = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!newMessage.trim() || !user || !selectedContact) return;
 
-    try {
-      const { error } = await supabase.from('messages').insert({
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
         content: newMessage.trim(),
         sender_id: user.id,
         receiver_id: selectedContact,
         read: false,
-      });
+      })
+      .select() // Pour récupérer l'objet inséré
+      .single();
 
-      if (error) throw error;
+    if (error) throw error;
 
-      setNewMessage('');
-    } catch (error) {
-      console.error('Erreur envoi message:', error);
-      toast.error("Impossible d'envoyer le message.");
+    if (data) {
+      // Ajouter directement le message dans la liste
+      setMessages((prev) => [...prev, {
+        ...data,
+        sender: { name: profile?.name || 'Moi' },
+        receiver: { name: contacts.find(c => c.id === selectedContact)?.name || '' },
+      }]);
     }
-  };
+
+    setNewMessage('');
+  } catch (error) {
+    console.error('Erreur envoi message:', error);
+    toast.error("Impossible d'envoyer le message.");
+  }
+};
+
 
   return (
     <div className="fixed bottom-20 right-4 w-80 h-96 bg-white rounded-lg shadow-lg flex flex-col border border-gray-200">

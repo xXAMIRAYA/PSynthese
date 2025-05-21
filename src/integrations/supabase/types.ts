@@ -9,6 +9,49 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+    // 👉 Ajoute ta table ici
+    donation_materials: {
+      Row: {
+        id: string;
+        campaign_id: string;
+        user_id: string;
+        material_name: string;
+        quantity: number;
+        condition: string | null;
+        description: string | null;
+        message: string | null;
+        anonymous: boolean;
+        created_at: string;
+      };
+      Insert: {
+        id?: string;
+        campaign_id: string;
+        user_id: string;
+        material_name: string;
+        quantity: number;
+        condition?: string | null;
+        description?: string | null;
+        message?: string | null;
+        anonymous: boolean;
+        created_at?: string;
+      };
+      
+      Relationships: [
+        {
+          foreignKeyName: "donation_materials_user_id_fkey";
+          columns: ["user_id"];
+          referencedRelation: "profiles";
+          referencedColumns: ["id"];
+        },
+        {
+          foreignKeyName: "donation_materials_campaign_id_fkey";
+          columns: ["campaign_id"];
+          referencedRelation: "campaigns";
+          referencedColumns: ["id"];
+        }
+      ];
+    };
+
       messages: {
   Row: {
     id: string

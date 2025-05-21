@@ -235,7 +235,6 @@
 // };
 
 // export default DonateForm;
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -244,9 +243,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { makeDonation , } from '@/services/donationService';
+import { makeDonation } from '@/services/donationService';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { HandCoins, Box, HeartHandshake } from 'lucide-react';
+import { DonationPayload } from '@/services/DonationPayload';
 
 interface DonateFormProps {
   campaignId: string;
@@ -273,7 +273,26 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+const payload: any = {
+  type: donationType,
+  campaign_id: campaignId, // 🟡 adapté ici
+  user_id: user.id,
+  anonymous: isAnonymous,
+  message: message || undefined,
 
+  ...(donationType === 'argent' && { amount }),
+
+  ...(donationType === 'materiel' && {
+    material_name: materialName, // 🟡 idem
+    quantity,
+    description: materialDescription || undefined,
+  }),
+
+  ...(donationType === 'benevolat' && {
+    availability,
+    skills: skills || undefined,
+  }),
+};
     if (!user) {
       toast({
         title: "Erreur",
@@ -324,7 +343,7 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
         formData.append('anonymous', isAnonymous.toString());
       } 
       else if (donationType === 'materiel') {
-        formData.append('materialName', materialName.trim());
+        formData.append('items', materialName.trim());
         formData.append('quantity', quantity.toString());
         formData.append('anonymous', isAnonymous.toString());
         if (materialDescription) formData.append('description', materialDescription);
@@ -337,11 +356,12 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
       else if (donationType === 'benevolat') {
         formData.append('availability', availability.trim());
         if (skills) formData.append('skills', skills.trim());
+        formData.append('anonymous', isAnonymous.toString());
       }
 
       if (message) formData.append('message', message.trim());
 
-      await makeDonation(formData);
+      await makeDonation(payload);
 
       toast({
         title: "Merci pour votre générosité !",
@@ -479,12 +499,12 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
                   <Textarea
                     value={materialDescription}
                     onChange={(e) => setMaterialDescription(e.target.value)}
+                    placeholder="Description (optionnel)"
                     className="mt-2"
-                    rows={3}
                   />
                 </div>
                 <div>
-                  <Label>Photos</Label>
+                  <Label>Images</Label>
                   <Input
                     type="file"
                     accept="image/*"
@@ -492,31 +512,29 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
                     onChange={(e) => setImages(e.target.files)}
                     className="mt-2"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Max 5 photos</p>
                 </div>
               </div>
             )}
 
-            {/* Volunteer */}
+            {/* Volunteer donation */}
             {donationType === 'benevolat' && (
               <div className="space-y-4">
                 <div>
                   <Label>Disponibilité *</Label>
-                  <Input
+                  <Textarea
                     value={availability}
                     onChange={(e) => setAvailability(e.target.value)}
-                    placeholder="Ex: Week-ends, 2h par jour..."
+                    placeholder="Ex: Tous les samedis matin"
                     className="mt-2"
                   />
                 </div>
                 <div>
-                  <Label>Compétences</Label>
+                  <Label>Compétences / Expérience</Label>
                   <Textarea
                     value={skills}
                     onChange={(e) => setSkills(e.target.value)}
-                    placeholder="Décrivez vos compétences..."
+                    placeholder="Décrivez vos compétences (optionnel)"
                     className="mt-2"
-                    rows={3}
                   />
                 </div>
               </div>
@@ -524,53 +542,38 @@ const DonateForm = ({ campaignId, onSuccess, onCancel }: DonateFormProps) => {
 
             {/* Common fields */}
             <div>
-              <Label>
-                {donationType === 'benevolat' ? 'Message' : 'Message d\'accompagnement'}
-              </Label>
+              <Label>Message (optionnel)</Label>
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                placeholder="Un message pour la campagne"
                 className="mt-2"
-                rows={3}
               />
             </div>
 
-            {donationType !== 'benevolat' && (
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="anonymous"
-                  checked={isAnonymous}
-                  onCheckedChange={setIsAnonymous}
-                />
-                <Label htmlFor="anonymous">Rendre anonyme</Label>
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={isAnonymous}
+                onCheckedChange={setIsAnonymous}
+                id="anonymous-switch"
+              />
+              <Label htmlFor="anonymous-switch" className="cursor-pointer">
+                Faire un don anonyme
+              </Label>
+            </div>
+
+            <CardFooter className="pt-0">
+              <div className="flex justify-end gap-3">
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Envoi en cours...' : 'Envoyer'}
+                </Button>
+                <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+                  Annuler
+                </Button>
               </div>
-            )}
+            </CardFooter>
           </form>
         </CardContent>
-
-        <CardFooter className="sticky bottom-0 bg-background border-t p-6 pt-4">
-          <div className="flex gap-3 w-full">
-            <Button
-              type="submit"
-              className="flex-1"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Envoi en cours..." : 
-                donationType === 'argent' ? "Confirmer le don" :
-                donationType === 'materiel' ? "Envoyer le matériel" :
-                "S'engager"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Annuler
-            </Button>
-          </div>
-        </CardFooter>
       </Card>
     </div>
   );
