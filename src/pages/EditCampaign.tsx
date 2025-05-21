@@ -12,122 +12,139 @@ import {
   Spin,
 } from "antd";
 import moment from "moment";
+import type { Dayjs } from "dayjs";
 
 const { Option } = Select;
 const { TextArea } = Input;
 
-interface Campaign {
-  id: string;
+interface CampaignFormValues {
   title: string;
   description: string;
-  category: "emergency" | "research" | "equipment" | "care" | "awareness";
+  category: string;
   location: string;
-  organizer_id: string;
   target: number;
-  raised: number;
-  donors_count: number;
-  image_url?: string | null;
-  end_date: string; // ISO string
-  status: "active" | "completed" | "urgent";
+  image_url?: string;
+  end_date: Dayjs;
+  status: string;
 }
 
 const categories = ["emergency", "research", "equipment", "care", "awareness"];
 const statuses = ["active", "completed", "urgent"];
 
 const EditCampaign: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id: campaignId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
-    setLoading(true);
-    supabase
-      .from<Campaign>("campaigns")
-      .select("*")
-      .eq("id", id)
-      .single()
-      .then(({ data, error }) => {
-        if (error) {
-          message.error("Erreur lors du chargement : " + error.message);
-          return;
-        }
-        if (data) {
-          form.setFieldsValue({
-            ...data,
-            end_date: moment(data.end_date),
-          });
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [id, form]);
+    if (!campaignId) return;
 
-  const onFinish = async (values: any) => {
-    setLoading(true);
+    const fetchCampaign = async () => {
+      setInitialLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("campaigns")
+          .select("*")
+          .eq("id", campaignId)
+          .single();
 
-    const updateData = {
-      title: values.title,
-      description: values.description,
-      category: values.category,
-      location: values.location,
-      organizer_id: values.organizer_id,
-      target: values.target,
-      raised: values.raised,
-      donors_count: values.donors_count,
-      image_url: values.image_url,
-      end_date: values.end_date.toISOString(),
-      status: values.status,
+        if (error) throw error;
+
+        form.setFieldsValue({
+          ...data,
+          end_date: moment(data.end_date),
+        });
+      } catch (error: any) {
+        message.error(`Erreur de chargement: ${error.message}`);
+      } finally {
+        setInitialLoading(false);
+      }
     };
 
-    const { error } = await supabase
-      .from("campaigns")
-      .update(updateData)
-      .eq("id", id);
+    fetchCampaign();
+  }, [campaignId, form]);
 
-    setLoading(false);
+  const handleUpdate = async (values: CampaignFormValues) => {
+    if (!campaignId) return;
+    setLoading(true);
 
-    if (error) {
-      message.error("Erreur lors de la mise à jour : " + error.message);
-    } else {
-      message.success("Campagne mise à jour avec succès !");
-      navigate(`/campaign/${id}`);
+    try {
+      const updateData = {
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        location: values.location,
+        target: Number(values.target),
+        image_url: values.image_url || null,
+        end_date: values.end_date.toISOString(),
+        status: values.status,
+      };
+
+      console.log("ID campagne à mettre à jour :", campaignId);
+      console.log("Données à mettre à jour :", updateData);
+
+      const { data, error } = await supabase
+        .from("campaigns")
+        .update(updateData)
+        .eq("id", campaignId)
+        .select(); // IMPORTANT pour récupérer la réponse
+
+      if (error) throw error;
+
+      console.log("Mise à jour réussie :", data);
+
+      message.success("Campagne mise à jour avec succès!");
+      navigate(`/campaign/${campaignId}`);
+    } catch (error: any) {
+      console.error("Erreur complète:", error);
+      message.error(`Échec de la mise à jour: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) return <Spin tip="Chargement..." style={{ marginTop: 50 }} />;
+  if (initialLoading) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   return (
-    <div style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
-      <h2>Modifier la campagne</h2>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: 24 }}>
+      <h1 style={{ marginBottom: 24 }}>Modifier la campagne</h1>
+
       <Form
         form={form}
         layout="vertical"
-        onFinish={onFinish}
-        initialValues={{ raised: 0, donors_count: 0 }}
+        onFinish={handleUpdate}
+        initialValues={{ status: "active" }}
       >
         <Form.Item
           label="Titre"
           name="title"
-          rules={[{ required: true, message: "Le titre est requis" }]}
+          rules={[{ required: true, message: "Champ obligatoire" }]}
         >
-          <Input />
+          <Input placeholder="Titre de la campagne" />
         </Form.Item>
 
         <Form.Item
           label="Description"
           name="description"
-          rules={[{ required: true, message: "La description est requise" }]}
+          rules={[{ required: true, message: "Champ obligatoire" }]}
         >
-          <TextArea rows={4} />
+          <TextArea rows={4} placeholder="Description complète" />
         </Form.Item>
 
         <Form.Item
           label="Catégorie"
           name="category"
-          rules={[{ required: true, message: "La catégorie est requise" }]}
+          rules={[{ required: true, message: "Champ obligatoire" }]}
         >
-          <Select>
+          <Select placeholder="Sélectionnez une catégorie">
             {categories.map((cat) => (
               <Option key={cat} value={cat}>
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -137,54 +154,51 @@ const EditCampaign: React.FC = () => {
         </Form.Item>
 
         <Form.Item
-          label="Lieu"
+          label="Localisation"
           name="location"
-          rules={[{ required: true, message: "Le lieu est requis" }]}
+          rules={[{ required: true, message: "Champ obligatoire" }]}
         >
-          <Input />
+          <Input placeholder="Lieu de la campagne" />
         </Form.Item>
 
         <Form.Item
-          label="ID de l'organisateur"
-          name="organizer_id"
-          rules={[{ required: true, message: "L'organisateur est requis" }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          label="Objectif (target)"
+          label="Objectif financier"
           name="target"
-          rules={[{ required: true, message: "L'objectif est requis" }]}
+          rules={[{ required: true, message: "Champ obligatoire" }]}
         >
-          <InputNumber min={0} style={{ width: "100%" }} />
-        </Form.Item>
-
-        <Form.Item label="Montant levé (raised)" name="raised">
-          <InputNumber min={0} style={{ width: "100%" }} />
-        </Form.Item>
-
-        <Form.Item label="Nombre de donateurs" name="donors_count">
-          <InputNumber min={0} style={{ width: "100%" }} />
+          <InputNumber
+            min={0}
+            style={{ width: "100%" }}
+            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+            parser={(value) => value?.replace(/\$\s?|(,*)/g, "") || ""}
+          />
         </Form.Item>
 
         <Form.Item label="URL de l'image" name="image_url">
-          <Input />
+          <Input placeholder="https://example.com/image.jpg" />
         </Form.Item>
 
         <Form.Item
           label="Date de fin"
           name="end_date"
-          rules={[{ required: true, message: "La date de fin est requise" }]}
+          rules={[{ required: true, message: "Champ obligatoire" }]}
         >
-          <DatePicker showTime style={{ width: "100%" }} />
+          <DatePicker
+            showTime
+            style={{ width: "100%" }}
+            disabledDate={(current) => current && current < moment().startOf("day")}
+          />
         </Form.Item>
 
-        <Form.Item label="Statut" name="status">
+        <Form.Item
+          label="Statut"
+          name="status"
+          rules={[{ required: true, message: "Champ obligatoire" }]}
+        >
           <Select>
-            {statuses.map((s) => (
-              <Option key={s} value={s}>
-                {s.charAt(0).toUpperCase() + s.slice(1)}
+            {statuses.map((status) => (
+              <Option key={status} value={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </Option>
             ))}
           </Select>
@@ -192,7 +206,14 @@ const EditCampaign: React.FC = () => {
 
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading}>
-            Mettre à jour
+            Enregistrer les modifications
+          </Button>
+          <Button
+            style={{ marginLeft: 8 }}
+            onClick={() => navigate(-1)}
+            disabled={loading}
+          >
+            Annuler
           </Button>
         </Form.Item>
       </Form>
