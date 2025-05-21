@@ -497,9 +497,9 @@ const AdminDashboard = () => {
                         </td>
                         <td className="p-4 align-middle">
                           <div className="flex gap-2">
-                            {/* <Button variant="ghost" size="icon" onClick={() => navigate(`/admin/campaigns/${campaign.id}/edit`)}>
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/admin/campaigns/${campaign.id}/edit`)}>
                               <Edit className="h-4 w-4" />
-                            </Button> */}
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -556,7 +556,7 @@ const AdminDashboard = () => {
                               )}
                             </div>
                             <span>{donation.user?.name || "Anonyme"}</span>
-                          </div>
+                          </div> 
                         </td>
                         <td className="p-4 align-middle font-medium">
                           {parseFloat(donation.amount).toFixed(2)} €
