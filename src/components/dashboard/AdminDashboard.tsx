@@ -11,14 +11,38 @@ import { ArrowUp, Users, Target, HeartHandshake, Heart, Award, Calendar, PlusCir
 const AdminDashboard = () => {
   const [pendingDonations, setPendingDonations] = useState([]);
 
-   const fetchPendingDonations = async () => {
+  // affichage des dons valider 
+  const fetchAllDonations = async () => {
+      const { data, error } = await supabase
+      .from("donations")
+      .select("*, user:profiles(id, name, email, avatar_url, role, created_at)")
+      .eq("status", "validated") // filtrer par dons validés
+      .order("created_at", { ascending: false }); // du plus récent au plus ancien
+
+    if (!error) setDonations(data || []);
+  };
+
+
+  useEffect(() => {
+    fetchAllDonations(); // appel de la fonction ici
+  }, []);
+
+
+
+
+
+
+
+  const fetchPendingDonations = async () => {
     const { data, error } = await supabase
       .from("donations")
       .select("*, user:profiles(id, name, email, avatar_url, role, created_at)")
-      .eq("status", "pending");
+      .eq("status", "pending")
+      .order("created_at", { ascending: false }); // ⬅️ Ajout ici pour trier par date décroissante
 
     if (!error) setPendingDonations(data || []);
   };
+
 
   const handleValidateDonation = async (donationId: string) => {
     const { error } = await supabase
@@ -27,6 +51,7 @@ const AdminDashboard = () => {
       .eq("id", donationId);
 
     if (!error) {
+      fetchAllDonations();
       setPendingDonations((prev) =>
         prev.map((d) => d.id === donationId ? { ...d, status: "validated" } : d)
       );
@@ -401,6 +426,8 @@ const AdminDashboard = () => {
           <TabsTrigger value="campaigns">Campagnes</TabsTrigger>
           <TabsTrigger value="donations">Dons récents</TabsTrigger>
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+          <TabsTrigger value="recentDonations">Dons validé</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="campaigns" className="mt-6 space-y-4">
@@ -498,6 +525,71 @@ const AdminDashboard = () => {
             </div>
           </div>
         </TabsContent>
+        <TabsContent value="recentDonations" className="mt-6 space-y-4">
+          <div className="rounded-md border">
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="h-12 px-4 text-left align-middle font-medium">Donateur</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Montant</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Message</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Statut</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {donations.length > 0 ? (
+                    donations.map((donation) => (
+                      <tr key={donation.id} className="border-b hover:bg-muted/50 transition-colors">
+                        <td className="p-4 align-middle">
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 rounded-full overflow-hidden bg-muted">
+                              {donation.user?.avatar_url ? (
+                                <img
+                                  src={donation.user.avatar_url}
+                                  alt={donation.user.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Users className="h-4 w-4 m-auto" />
+                              )}
+                            </div>
+                            <span>{donation.user?.name || "Anonyme"}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 align-middle font-medium">
+                          {parseFloat(donation.amount).toFixed(2)} €
+                        </td>
+                        <td className="p-4 align-middle">
+                          {donation.message || (
+                            <span className="text-muted-foreground text-xs">Aucun</span>
+                          )}
+                        </td>
+                        <td className="p-4 align-middle">
+                          {donation.status === "validated" && (
+                            <Badge className="bg-green-100 text-green-700">Validé</Badge>
+                          )}
+                        </td>
+
+                        <td className="p-4 align-middle">
+                          {new Date(donation.created_at).toLocaleDateString("fr-FR")}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                        Aucun don validé.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </TabsContent>
+
 
         <TabsContent value="donations" className="mt-6 space-y-4">
           <div className="rounded-md border">
