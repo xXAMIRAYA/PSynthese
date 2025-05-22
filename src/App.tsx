@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,16 +8,18 @@ import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Pages
-import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import CampaignsPage from "./pages/CampaignsPage";
 import CampaignDetailPage from "./pages/CampaignDetailPage";
+import EditCampaign from "./pages/EditCampaign";  // <-- Import corrigé ici
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import AdminPage from "./pages/AdminPage";
 import NotFound from "./pages/NotFound";
 import CreateCampaignPage from "./pages/CreateCampaignPage";
+import ResetPassword from "./components/auth/ResetPassword";
+import HomePage from "./pages/HomePage";
 
 const queryClient = new QueryClient();
 
@@ -34,9 +35,11 @@ const App = () => (
             <Route path="/about" element={<Layout><AboutPage /></Layout>} />
             <Route path="/campaigns" element={<Layout><CampaignsPage /></Layout>} />
             <Route path="/campaign/:id" element={<Layout><CampaignDetailPage /></Layout>} />
+            <Route path="/admin/campaigns/:id/edit" element={<Layout><EditCampaign /></Layout>} />  {/* Route EditCampaign */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            
+            <Route path="/reset-password" element={<ResetPassword />} />
+
             {/* Protected routes */}
             <Route 
               path="/dashboard" 

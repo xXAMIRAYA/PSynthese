@@ -11,7 +11,8 @@ import DonateForm from './DonateForm';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchCampaignById } from '@/services/campaignService';
 import { fetchDonationsByCampaign } from '@/services/donationService';
-import { ArrowLeft, Calendar, MapPin, User as UserIcon, Award, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, User as UserIcon, Award, Share2, Clock } from "lucide-react";
+
 
 const CampaignDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,7 +26,21 @@ const CampaignDetail = () => {
 
   useEffect(() => {
     if (!id) return;
+const now = new Date();
 
+const filteredDonations = donations.filter(d => {
+  if (d.status === 'validated') {
+    return true;
+  }
+
+  if (d.status === 'pending' && d.user_id === user?.id) {
+    const createdAt = new Date(d.created_at);
+    const diffInMinutes = (now.getTime() - createdAt.getTime()) / 1000 / 60;
+    return diffInMinutes <= 1; // Affiche uniquement si le don a moins de 1 minute
+  }
+
+  return false;
+});
     const loadCampaign = async () => {
       setIsLoading(true);
       try {
@@ -34,6 +49,7 @@ const CampaignDetail = () => {
 
         const donationsData = await fetchDonationsByCampaign(id);
         setDonations(donationsData);
+       
       } catch (error) {
         console.error('Error loading campaign:', error);
         toast({
@@ -133,25 +149,25 @@ const CampaignDetail = () => {
   };
   return (
     <div className="container max-w-4xl mx-auto p-4 space-y-8">
-     <div className="flex justify-between items-center mt-4">
-  <Button
-    variant="ghost"
-    onClick={() => navigate('/campaigns')}
-    className="flex items-center gap-2"
-  >
-    <ArrowLeft size={16} />
-    Retour aux campagnes
-  </Button>
+      <div className="flex justify-between items-center mt-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/campaigns')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft size={16} />
+          Retour aux campagnes
+        </Button>
 
-  <Button
-    variant="outline"
-    onClick={handleShare}
-    className="flex items-center"
-  >
-    <Share2 className="h-4 w-4 mr-2" />
-    Partager
-  </Button>
-</div>
+        <Button
+          variant="outline"
+          onClick={handleShare}
+          className="flex items-center"
+        >
+          <Share2 className="h-4 w-4 mr-2" />
+          Partager
+        </Button>
+      </div>
 
 
       <div className="space-y-4">
@@ -226,9 +242,9 @@ const CampaignDetail = () => {
         </div>
 
         <Tabs defaultValue="description">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="description">Description</TabsTrigger>
-            <TabsTrigger value="updates">Mises à jour {campaign.updates?.length ? `(${campaign.updates.length})` : ''}</TabsTrigger>
+            {/* <TabsTrigger value="updates">Mises à jour {campaign.updates?.length ? `(${campaign.updates.length})` : ''}</TabsTrigger> */}
             <TabsTrigger value="donors">Donateurs</TabsTrigger>
           </TabsList>
           <TabsContent value="description" className="mt-6">
@@ -240,7 +256,7 @@ const CampaignDetail = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="updates" className="mt-6">
+          {/* <TabsContent value="updates" className="mt-6">
             {campaign.updates && campaign.updates.length > 0 ? (
               <div className="space-y-4">
                 {campaign.updates.map((update: any) => (
@@ -264,44 +280,83 @@ const CampaignDetail = () => {
                 Aucune mise à jour pour le moment.
               </p>
             )}
-          </TabsContent>
+          </TabsContent> */}
 
-          <TabsContent value="donors" className="mt-6">
-            {donations && donations.length > 0 ? (
-              <div className="space-y-4">
-                {donations.map((donation: any) => (
-                  <Card key={donation.id}>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          {donation.anonymous ? (
-                            <p className="font-semibold">Donateur anonyme</p>
-                          ) : (
-                            <p className="font-semibold">{donation.donor?.name || 'Unknown'}</p>
-                          )}
-                          <p className="text-sm text-muted-foreground">{formatDate(donation.created_at)}</p>
-                          {donation.message && (
-                            <p className="mt-2 italic">{donation.message}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold">{formatCurrency(donation.amount)}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+<TabsContent value="donors" className="mt-6">
+  {donations && donations.length > 0 ? (
+    <div className="space-y-4">
+      {donations
+        .filter((donation: any) => {
+          if (donation.status === 'validated') return true;
+
+          if (donation.status === 'pending' && donation.user_id === user?.id) {
+            const now = new Date();
+            const createdAt = new Date(donation.created_at);
+            const diffInMinutes = (now.getTime() - createdAt.getTime()) / 1000 / 60;
+            return diffInMinutes <= 1; // changer ici pour 5 min si besoin
+          }
+
+          return false;
+        })
+        .map((donation: any) => (
+          <Card key={donation.id}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-semibold">
+                    {donation.anonymous
+                      ? "Donateur anonyme"
+                      : donation.donor?.name || "Inconnu"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatDate(donation.created_at)}
+                  </p>
+
+                  {/* Message spécial si donation en attente */}
+                  {donation.status === 'pending' && (
+                    <p className="text-xs text-orange-600 flex items-center gap-1 mt-1">
+                      <Clock className="w-4 h-4" /> En attente de validation
+                    </p>
+                  )}
+
+                {/* Message libre du donateur */}
+                  {donation.message && (
+                    <p className="mt-2 italic">{donation.message}</p>
+                  )}
+                </div>
+
+                <div className="text-sm text-muted-foreground font-bold text-right">
+                  {/* Affichage selon le type de don */}
+                  {donation.type === 'argent' && donation.amount !== undefined && (
+                    <span>Montant: {donation.amount}€ - </span>
+                  )}
+                  {donation.type === 'materiel' && donation.material_name && (
+                    <span>Matériel: {donation.material_name} - </span>
+                  )}
+                  {donation.type === 'benevolat' && donation.volunteer_action && (
+                    <span>Action: {donation.volunteer_action} - </span>
+                  )}
+
+                  {/* Toujours afficher le type (avec première lettre en majuscule) */}
+                  <span>{donation.type.charAt(0).toUpperCase() + donation.type.slice(1)}</span>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-12">
-                <Award className="h-12 w-12 mx-auto text-primary mb-4" />
-                <h3 className="text-xl font-semibold">Soyez le premier à donner !</h3>
-                <p className="text-muted-foreground mt-2">
-                  Votre soutien est essentiel pour atteindre nos objectifs.
-                </p>
-              </div>
-            )}
-          </TabsContent>
+            </CardContent>
+          </Card>
+        ))}
+    </div>
+  ) : (
+    <div className="text-center py-12">
+      <Award className="h-12 w-12 mx-auto text-primary mb-4" />
+      <h3 className="text-xl font-semibold">Soyez le premier à donner !</h3>
+      <p className="text-muted-foreground mt-2">
+        Votre soutien est essentiel pour atteindre nos objectifs.
+      </p>
+    </div>
+  )}
+</TabsContent>
+
+
         </Tabs>
       </div>
     </div>

@@ -1,39 +1,62 @@
 import { supabase } from "@/integrations/supabase/client";
+import { DonationPayload,  DonationArgent,
+  DonationMateriel,
+  DonationBenevolat } from "./DonationPayload";
 
 export type DonationFormData = {
   amount: number;
   message?: string;
   anonymous: boolean;
 };
-
-export const makeDonation = async (
-  campaignId: string, 
-  userId: string, 
-  donationData: DonationFormData
-) => {
+export async function makeDonation(data: DonationPayload) {
   try {
-    const { data, error } = await supabase
+    const { type, ...donationData } = data;
+
+    const { error } = await supabase
       .from('donations')
-      .insert({
-        campaign_id: campaignId,
-        user_id: userId,
-        amount: donationData.amount,
-        message: donationData.message || null,
-        anonymous: donationData.anonymous
-      })
-      .select()
-      .single();
+      .insert([
+        {
+          type,
+          ...donationData
+        }
+      ]);
 
-    if (error) {
-      throw error;
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error making donation:', error);
+    if (error) throw error;
+    console.log('Don ajouté avec succès');
+  } catch (error: any) {
+    console.error('Erreur lors de la soumission du don :', error);
     throw error;
   }
-};
+}
+
+// export const makeDonation = async (
+//   campaignId: string, 
+//   userId: string, 
+//   donationData: DonationFormData
+// ) => {
+//   try {
+//     const { data, error } = await supabase
+//       .from('donations')
+//       .insert({
+//         campaign_id: campaignId,
+//         user_id: userId,
+//         amount: donationData.amount,
+//         message: donationData.message || null,
+//         anonymous: donationData.anonymous
+//       })
+//       .select()
+//       .single();
+
+//     if (error) {
+//       throw error;
+//     }
+
+//     return data;
+//   } catch (error) {
+//     console.error('Error making donation:', error);
+//     throw error;
+//   }
+// };
 
 export const fetchDonationsByCampaign = async (campaignId: string) => {
   try {

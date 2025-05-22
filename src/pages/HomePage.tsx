@@ -1,4 +1,4 @@
-import { ChevronRight, ArrowRight } from 'lucide-react';
+import { ChevronRight, ArrowRight, Target, Heart, CheckCircle } from 'lucide-react';
 import CampaignCard from '@/components/campaigns/CampaignCard';
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Campaign } from '@/types';
-import { Progress } from '@/components/ui/progress';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -44,10 +43,6 @@ const HomePage = () => {
     );
     setFilteredCampaigns(results);
   }, [search, campaigns]);
-
-  const urgentCampaigns = campaigns.filter(
-    (c) => c.category?.toLowerCase() === 'emergency'
-  );
 
   return (
     <div>
@@ -91,44 +86,35 @@ const HomePage = () => {
 
       {/* Urgent Campaigns Section */}
       <section className="py-10 bg-red-50">
-  <div className="container mx-auto px-4">
-    <div className="flex items-center justify-between mb-6">
-      <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-        <div className="mr-3 p-2 bg-red-100 rounded-full">
-          <svg
-            className="h-6 w-6 text-red-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        </div>
-        Campagnes Urgentes
-      </h2>
-      <Button variant="outline" size="sm" asChild>
-        <Link to="/campaigns?tab=emergency" className="flex items-center">
-          Voir toutes
-          <ArrowRight className="ml-1 h-4 w-4" />
-        </Link>
-      </Button>
-    </div>
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+              <div className="mr-3 p-2 bg-red-100 rounded-full">
+                <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              Campagnes Urgentes
+            </h2>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/campaigns?tab=emergency" className="flex items-center">
+                Voir toutes
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {filteredCampaigns
-        .filter((campaign) => campaign.category === "emergency")
-        .slice(0, 3)
-        .map((campaign) => (
-          <CampaignCard key={campaign.id} campaign={campaign} />
-        ))}
-    </div>
-  </div>
-</section>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCampaigns
+              .filter((campaign) => campaign.category?.toLowerCase() === "emergency")
+              .slice(0, 3)
+              .map((campaign) => (
+                <CampaignCard key={campaign.id} campaign={campaign} />
+              ))}
+          </div>
+        </div>
+      </section>
+
       {/* Featured Campaigns Section */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 md:px-6">
@@ -164,6 +150,47 @@ const HomePage = () => {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-16 bg-accent/50">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-2">Comment ça marche</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              MainSolidaire rend le processus de don transparent, engageant et efficace.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex flex-col items-center text-center">
+              <div className="h-16 w-16 rounded-full bg-medical-100 flex items-center justify-center mb-4">
+                <Target className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-medium mb-2">1. Explorez les campagnes</h3>
+              <p className="text-muted-foreground">
+                Parcourez les différentes initiatives médicales et choisissez celle qui vous tient à cœur.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="h-16 w-16 rounded-full bg-medical-100 flex items-center justify-center mb-4">
+                <Heart className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-medium mb-2">2. Faites un don</h3>
+              <p className="text-muted-foreground">
+                Contribuez au montant de votre choix en toute sécurité et transparence.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="h-16 w-16 rounded-full bg-medical-100 flex items-center justify-center mb-4">
+                <CheckCircle className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-medium mb-2">3. Suivez l’impact</h3>
+              <p className="text-muted-foreground">
+                Recevez des mises à jour sur la façon dont vos dons aident les personnes dans le besoin.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </div>
