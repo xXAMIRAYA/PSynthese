@@ -1,63 +1,62 @@
 import { supabase } from "@/integrations/supabase/client";
+import { DonationPayload,  DonationArgent,
+  DonationMateriel,
+  DonationBenevolat } from "./DonationPayload";
 
 export type DonationFormData = {
-  type: 'money' | 'material' | 'volunteering';
-  amount?: number;
+  amount: number;
   message?: string;
   anonymous: boolean;
-
-  // Pour don matériel
-  description?: string;
-  quantity?: number;
-
-  // Pour bénévolat
-  skills?: string;
-  availability?: string;
 };
-
-export const makeDonation = async (
-  campaignId: string, 
-  userId: string, 
-  donationData: DonationFormData
-) => {
+export async function makeDonation(data: DonationPayload) {
   try {
-    const baseData: any = {
-      campaign_id: campaignId,
-      user_id: userId,
-      type: donationData.type,
-      message: donationData.message || null,
-      anonymous: donationData.anonymous,
-    };
+    const { type, ...donationData } = data;
 
-    if (donationData.type === 'money') {
-      baseData.amount = donationData.amount;
-    }
-
-    if (donationData.type === 'material') {
-      baseData.description = donationData.description;
-      baseData.quantity = donationData.quantity;
-    }
-
-    if (donationData.type === 'volunteering') {
-      baseData.skills = donationData.skills;
-      baseData.availability = donationData.availability;
-    }
-
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('donations')
-      .insert(baseData)
-      .select()
-      .single();
+      .insert([
+        {
+          type,
+          ...donationData
+        }
+      ]);
 
     if (error) throw error;
-
-    return data;
-  } catch (error) {
-    console.error('Error making donation:', error);
+    console.log('Don ajouté avec succès');
+  } catch (error: any) {
+    console.error('Erreur lors de la soumission du don :', error);
     throw error;
   }
-};
+}
 
+// export const makeDonation = async (
+//   campaignId: string, 
+//   userId: string, 
+//   donationData: DonationFormData
+// ) => {
+//   try {
+//     const { data, error } = await supabase
+//       .from('donations')
+//       .insert({
+//         campaign_id: campaignId,
+//         user_id: userId,
+//         amount: donationData.amount,
+//         message: donationData.message || null,
+//         anonymous: donationData.anonymous
+//       })
+//       .select()
+//       .single();
+
+//     if (error) {
+//       throw error;
+//     }
+
+//     return data;
+//   } catch (error) {
+//     console.error('Error making donation:', error);
+//     throw error;
+//   }
+// };
 
 export const fetchDonationsByCampaign = async (campaignId: string) => {
   try {
