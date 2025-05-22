@@ -13,7 +13,7 @@ const AdminDashboard = () => {
 
   // affichage des dons valider 
   const fetchAllDonations = async () => {
-      const { data, error } = await supabase
+    const { data, error } = await supabase
       .from("donations")
       .select("*, user:profiles(id, name, email, avatar_url, role, created_at)")
       .eq("status", "validated") // filtrer par dons validés
@@ -272,6 +272,33 @@ const AdminDashboard = () => {
     }
   };
 
+const handleDeleteUser = async (userId: string) => {
+  try {
+    const confirmed = window.confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.");
+    if (!confirmed) return;
+
+    setLoading(true);
+
+    const { error } = await supabase
+      .from("profiles") // ⚠️ Adapte le nom de ta table si différent
+      .delete()
+      .eq("id", userId);
+
+    if (error) throw error;
+
+    // Mise à jour de l’état local (facultatif selon ton UI)
+    setUsers((prev) => prev.filter((user) => user.id !== userId));
+
+    alert("Utilisateur supprimé avec succès");
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'utilisateur :", error);
+    alert("Impossible de supprimer l'utilisateur. Veuillez réessayer.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   // Supprimer une campagne
   const handleDeleteCampaign = async (campaignId: string) => {
     try {
@@ -304,6 +331,10 @@ const AdminDashboard = () => {
   };
 
 
+
+  const totalArgent = donations
+    .filter(don => don.type === 'argent')
+    .reduce((acc, don) => acc + don.amount, 0);
 
   // Charger toutes les données au montage du composant
   useEffect(() => {
@@ -373,7 +404,7 @@ const AdminDashboard = () => {
             <Heart className="h-4 w-4 text-medical-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.totalRaised)}</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalArgent)}</div>
             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
               <ArrowUp className="h-3 w-3 text-health-500" />
               <span>Mise à jour en temps réel</span>
@@ -426,7 +457,7 @@ const AdminDashboard = () => {
           <TabsTrigger value="campaigns">Campagnes</TabsTrigger>
           <TabsTrigger value="donations">Dons récents</TabsTrigger>
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-          <TabsTrigger value="recentDonations">Dons validé</TabsTrigger>
+          {/* <TabsTrigger value="recentDonations">Dons validé</TabsTrigger> */}
 
         </TabsList>
 
@@ -532,7 +563,7 @@ const AdminDashboard = () => {
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="h-12 px-4 text-left align-middle font-medium">Donateur</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Montant</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Type de donation</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Message</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Statut</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Date</th>
@@ -556,11 +587,15 @@ const AdminDashboard = () => {
                               )}
                             </div>
                             <span>{donation.user?.name || "Anonyme"}</span>
-                          </div> 
+                          </div>
                         </td>
-                        <td className="p-4 align-middle font-medium">
+                        {/* <td className="p-4 align-middle font-medium">
                           {parseFloat(donation.amount).toFixed(2)} €
+                        </td> */}
+                        <td className="p-4 align-middle font-medium capitalize">
+                          {donation.type}
                         </td>
+
                         <td className="p-4 align-middle">
                           {donation.message || (
                             <span className="text-muted-foreground text-xs">Aucun</span>
@@ -598,7 +633,7 @@ const AdminDashboard = () => {
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="h-12 px-4 text-left align-middle font-medium">Donateur</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Montant</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Type de donation </th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Message</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Date</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Statut</th>
@@ -621,8 +656,8 @@ const AdminDashboard = () => {
                             <span>{donation.user?.name || "Anonyme"}</span>
                           </div>
                         </td>
-                        <td className="p-4 align-middle font-medium">
-                          {parseFloat(donation.amount).toFixed(2)} €
+                     <td className="p-4 align-middle font-medium capitalize">
+                          {donation.type}
                         </td>
                         <td className="p-4 align-middle">
                           {donation.message || <span className="text-muted-foreground text-xs">Aucun</span>}
@@ -719,12 +754,14 @@ const AdminDashboard = () => {
                         </td>
                         <td className="p-4 align-middle">
                           <div className="flex gap-2">
-                            <Button
+                               <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => navigate(`/admin/users/${user.id}/edit`)}
+                              className="text-destructive"
+                              onClick={() => handleDeleteUser(user.id)}
+                              disabled={loading}
                             >
-                              <Edit className="h-4 w-4" />
+                              <Trash className="h-4 w-4" />
                             </Button>
                           </div>
                         </td>

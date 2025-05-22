@@ -51,6 +51,7 @@ export interface CampaignUpdate {
 }
 
 export interface Donation {
+  type: string;
   id: string;
   userId: string;
   campaignId: string;

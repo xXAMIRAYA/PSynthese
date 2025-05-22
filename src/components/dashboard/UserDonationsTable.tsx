@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 interface Donation {
   id: string;
+  type:string ;
   amount: number;
   created_at: string;
   campaign?: {
@@ -40,7 +41,7 @@ const UserDonationsTable = ({ donations, formatCurrency, formatDate }: UserDonat
           <thead>
             <tr className="border-b bg-muted/50">
               <th className="h-12 px-4 text-left align-middle font-medium">Campagne</th>
-              <th className="h-12 px-4 text-left align-middle font-medium">Montant</th>
+              <th className="h-12 px-4 text-left align-middle font-medium">Type de donation </th>
               <th className="h-12 px-4 text-left align-middle font-medium">Date</th>
               <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
             </tr>
@@ -51,9 +52,13 @@ const UserDonationsTable = ({ donations, formatCurrency, formatDate }: UserDonat
                 <td className="p-4 align-middle">
                   <div className="font-medium">{donation.campaign?.title || 'Campagne inconnue'}</div>
                 </td>
-                <td className="p-4 align-middle font-semibold">
-                  {formatCurrency(donation.amount)}
-                </td>
+            
+              <td className="p-4 align-middle font-semibold">
+  {donation.type === "argent"
+    ? `Argent : ${formatCurrency(donation.amount)}`
+    : donation.type}
+</td>
+
                 <td className="p-4 align-middle">
                   {formatDate(donation.created_at)}
                 </td>

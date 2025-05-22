@@ -11,14 +11,14 @@ interface UserStatsProps {
   formatDate: (dateString: string | null) => string;
 }
 
-const UserStats = ({ 
+const UserStats = ({
   role,
-  totalDonated, 
-  donationsCount, 
-  campaignsCount, 
-  createdAt, 
-  formatCurrency, 
-  formatDate 
+  totalDonated,
+  donationsCount,
+  campaignsCount,
+  createdAt,
+  formatCurrency,
+  formatDate
 }: UserStatsProps) => {
   return (
     <div className={`grid gap-4 ${role === 'donator' ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
@@ -26,11 +26,18 @@ const UserStats = ({
         <>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total des dons effectués</CardTitle>
+              <CardTitle className="text-sm font-medium">Nombre des dons effectués</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalDonated)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Sur {donationsCount} dons</p>
+
+               <div className="text-2xl font-bold"> 
+             {donationsCount} dons
+                {/* {formatCurrency(totalDonated)}  */}
+                {/* {donation.type === "argent"
+                  ? `Argent : ${formatCurrency(donation.amount)}`
+                  : donation.type} */}
+              </div> 
+           
             </CardContent>
           </Card>
 
@@ -52,8 +59,16 @@ const UserStats = ({
               <CardTitle className="text-sm font-medium">Total des dons effectués</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalDonated)}</div>
-              <p className="text-xs text-muted-foreground mt-1">Sur {donationsCount} dons</p>
+              
+               <div className="text-2xl font-bold"> 
+             {donationsCount} dons
+                {/* {formatCurrency(totalDonated)}  */}
+                {/* {donation.type === "argent"
+                  ? `Argent : ${formatCurrency(donation.amount)}`
+                  : donation.type} */}
+              </div> 
+              {/* <div className="text-2xl font-bold">{formatCurrency(totalDonated)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Sur {donationsCount} dons</p> */}
             </CardContent>
           </Card>
           <Card>
