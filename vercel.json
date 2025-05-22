@@ -1,11 +1,11 @@
 {
-  "builds": [
-    {
-      "src": "vite.config.ts",
-      "use": "@vercel/static-build"
-    }
-  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
   "routes": [
-    { "src": "/(.*)", "dest": "/" }
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }
