@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
     build: {
     chunkSizeWarningLimit: 1500, // augmente la limite à 1.5 Mo
   },
+  base: './',
   server: {
     host: "::",
     port: 8080,
@@ -23,3 +24,4 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
+
